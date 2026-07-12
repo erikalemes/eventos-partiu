@@ -152,8 +152,15 @@
 <!-- Cabecalho que so aparece no PDF/impressao -->
 <div id="cabecalho-impressao" class="so-impressao"></div>
 
-<script src="cidades.js"></script>
-<script src="dados.js"></script>
-<script src="app.js"></script>
+<!-- Carrega os dados com "cache-busting" horario: mesmo com o index.html em
+     cache, o navegador sempre busca a coleta mais recente (evita eventos velhos). -->
+<script>
+(function () {
+  var v = new Date().toISOString().slice(0, 13).replace(/[-T]/g, ""); // AAAAMMDDHH
+  document.write('<script src="cidades.js?v=' + v + '"><\/script>');
+  document.write('<script src="dados.js?v=' + v + '"><\/script>');
+  document.write('<script src="app.js?v=' + v + '"><\/script>');
+})();
+</script>
 </body>
 </html>
