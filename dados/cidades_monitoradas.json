@@ -1,0 +1,10 @@
+[
+  {"nome": "Goiânia", "uf": "GO", "slugSympla": "goiania-go", "slugEventbrite": "goi%C3%A2nia"},
+  {"nome": "Aparecida de Goiânia", "uf": "GO", "slugSympla": "aparecida-de-goiania-go", "slugEventbrite": "aparecida-de-goi%C3%A2nia"},
+  {"nome": "Anápolis", "uf": "GO", "slugSympla": "anapolis-go", "slugEventbrite": "an%C3%A1polis"},
+  {"nome": "Brasília", "uf": "DF", "slugSympla": "brasilia-df", "slugEventbrite": "bras%C3%ADlia"},
+  {"nome": "São Paulo", "uf": "SP", "slugSympla": "sao-paulo-sp", "slugEventbrite": "s%C3%A3o-paulo"},
+  {"nome": "Rio de Janeiro", "uf": "RJ", "slugSympla": "rio-de-janeiro-rj", "slugEventbrite": "rio-de-janeiro"},
+  {"nome": "Belo Horizonte", "uf": "MG", "slugSympla": "belo-horizonte-mg", "slugEventbrite": "belo-horizonte"},
+  {"nome": "Caldas Novas", "uf": "GO", "slugSympla": "caldas-novas-go", "slugEventbrite": "caldas-novas"}
+]

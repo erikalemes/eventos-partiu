@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Eventos - Partiu?! Encontre shows, teatro, cursos, festas e muito mais na sua cidade, com fontes reais e links oficiais.">
+<title>Eventos - Partiu?!</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟️</text></svg>">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="miolo">
+    <div class="marca">
+      <span class="marca-eventos">Eventos</span>
+      <span class="marca-partiu">Partiu?!</span>
+    </div>
+    <p class="lema">O que vamos fazer hoje?</p>
+  </div>
+</header>
+
+<main class="miolo">
+
+  <!-- ====================== BUSCA ====================== -->
+  <section class="painel-busca" aria-labelledby="titulo-busca">
+    <h1 id="titulo-busca" class="visualmente-oculto">Pesquisar eventos</h1>
+
+    <div class="linha-cidade">
+      <div class="campo campo-cidade">
+        <label for="campo-cidade">Cidade</label>
+        <input type="text" id="campo-cidade" autocomplete="off" spellcheck="false"
+               placeholder="Digite a cidade..." aria-describedby="ajuda-cidade">
+        <div id="lista-cidades" class="autocomplete" role="listbox" hidden></div>
+        <p id="ajuda-cidade" class="ajuda-campo"></p>
+      </div>
+      <div class="campo campo-cep">
+        <label for="campo-cep">ou CEP</label>
+        <input type="text" id="campo-cep" inputmode="numeric" autocomplete="postal-code"
+               placeholder="74000-000" maxlength="9" aria-describedby="ajuda-cep">
+        <p id="ajuda-cep" class="ajuda-campo"></p>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="campo-consulta">O que você gostaria de fazer?</label>
+      <div class="linha-consulta">
+        <input type="text" id="campo-consulta" maxlength="200"
+               placeholder="Ex.: shows gratuitos neste fim de semana">
+        <button type="button" id="botao-pesquisar" class="botao-principal">Pesquisar eventos</button>
+      </div>
+    </div>
+
+    <div class="exemplos" aria-label="Exemplos de pesquisa">
+      <button type="button" class="exemplo">Eventos neste fim de semana</button>
+      <button type="button" class="exemplo">Shows hoje à noite</button>
+      <button type="button" class="exemplo">Teatro no domingo</button>
+      <button type="button" class="exemplo">Eventos gratuitos</button>
+      <button type="button" class="exemplo">Cursos e oficinas</button>
+      <button type="button" class="exemplo">Gastronomia em Goiânia</button>
+      <button type="button" class="exemplo">Algo para fazer em casal</button>
+    </div>
+
+    <details class="filtros">
+      <summary>Filtros</summary>
+      <div class="filtros-corpo">
+        <div class="campo">
+          <label for="filtro-periodo">Período</label>
+          <select id="filtro-periodo">
+            <option value="tudo">Qualquer data</option>
+            <option value="hoje">Hoje</option>
+            <option value="amanha">Amanhã</option>
+            <option value="fds">Este fim de semana</option>
+            <option value="prox-fds">Próximo fim de semana</option>
+            <option value="semana">Esta semana</option>
+            <option value="prox-semana">Próxima semana</option>
+            <option value="mes">Este mês</option>
+            <option value="prox-mes">Próximo mês</option>
+            <option value="datas">Escolher datas...</option>
+          </select>
+        </div>
+        <div class="campo campo-datas" id="grupo-datas" hidden>
+          <label for="filtro-data-ini">De</label>
+          <input type="date" id="filtro-data-ini">
+          <label for="filtro-data-fim">até</label>
+          <input type="date" id="filtro-data-fim">
+        </div>
+        <div class="campo">
+          <label for="filtro-horario">Período do dia</label>
+          <select id="filtro-horario">
+            <option value="any">Qualquer horário</option>
+            <option value="manha">Manhã (até 12h)</option>
+            <option value="tarde">Tarde (12h às 18h)</option>
+            <option value="noite">Noite (após 18h)</option>
+          </select>
+        </div>
+        <fieldset class="campo grupo-categorias">
+          <legend>Categorias</legend>
+          <div class="chips" id="chips-categorias"></div>
+        </fieldset>
+        <div class="campo opcoes-extras">
+          <label class="opcao-caixa"><input type="checkbox" id="filtro-gratuito"> Somente gratuitos <small>(quando a fonte informa)</small></label>
+          <label class="opcao-caixa"><input type="checkbox" id="filtro-presencial" checked> Somente presenciais</label>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ====================== CARREGANDO ====================== -->
+  <section id="painel-carregando" class="painel-carregando" hidden aria-live="polite">
+    <div class="girador" aria-hidden="true"></div>
+    <p id="texto-carregando">Interpretando sua solicitação...</p>
+  </section>
+
+  <!-- ====================== RESULTADOS ====================== -->
+  <section id="painel-resultados" hidden aria-labelledby="titulo-resultados">
+    <div class="resumo-pesquisa" id="resumo-pesquisa"></div>
+    <div class="barra-resultados">
+      <h2 id="titulo-resultados" class="total-resultados"></h2>
+      <div class="acoes-resultados">
+        <label for="ordenar" class="visualmente-oculto">Ordenar por</label>
+        <select id="ordenar" aria-label="Ordenar resultados">
+          <option value="data">Mais próximos</option>
+          <option value="relevancia">Mais relevantes</option>
+          <option value="gratuitos">Gratuitos primeiro</option>
+        </select>
+        <button type="button" id="botao-pdf" class="botao-secundario">Gerar PDF</button>
+        <button type="button" id="botao-nova" class="botao-secundario">Nova pesquisa</button>
+      </div>
+    </div>
+    <div id="lista-resultados" aria-live="polite"></div>
+  </section>
+
+  <!-- ====================== VAZIO / AVISOS ====================== -->
+  <section id="painel-vazio" class="painel-vazio" hidden>
+    <h2>Nenhum evento encontrado</h2>
+    <div id="texto-vazio"></div>
+  </section>
+
+</main>
+
+<footer class="rodape">
+  <div class="miolo">
+    <p><strong>Eventos - Partiu?!</strong> mostra somente eventos reais coletados de plataformas públicas de ingressos
+      (<span id="rodape-fontes"></span>), sempre com link para a página original. Nada é inventado: preço e detalhes
+      devem ser confirmados no site oficial do evento.</p>
+    <p id="rodape-atualizacao"></p>
+    <p id="rodape-cidades"></p>
+  </div>
+</footer>
+
+<!-- Cabecalho que so aparece no PDF/impressao -->
+<div id="cabecalho-impressao" class="so-impressao"></div>
+
+<script src="cidades.js"></script>
+<script src="dados.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
