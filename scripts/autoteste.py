@@ -7,6 +7,7 @@ Uso: python scripts/autoteste.py
 Sai com codigo 1 se qualquer verificacao falhar (o workflow usa isso).
 """
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -64,6 +65,18 @@ verifica("eventbrite: descarta evento de outra cidade", coletar.normaliza_eventb
 _bruto_mesma = {"name": "Show em Goiania", "start_date": "2099-01-01", "start_time": "20:00", "url": "https://exemplo.com/y",
                 "primary_venue": {"name": "Local", "address": {"city": "Goiânia", "region": "GO"}}}
 verifica("eventbrite: mantem evento da cidade pesquisada", (coletar.normaliza_eventbrite(_bruto_mesma, cidade_teste) or {}).get("cidade") == "Goiânia")
+
+# ------------------------------------------ 2b. extracao Goiânia Pulsa (institucional)
+html_gp = (FIXTURES / "goianiapulsa.html").read_text(encoding="utf-8", errors="ignore")
+brutos_gp = coletar.extrai_goianiapulsa(html_gp)
+verifica("goiania pulsa: extrai cartoes do fixture", len(brutos_gp) >= 30, f"so {len(brutos_gp)}")
+norm_gp = [n for n in (coletar.normaliza_goianiapulsa(b) for b in brutos_gp) if n]
+verifica("goiania pulsa: normaliza com nome/data/url", all(e["nome"] and len(e["dataInicio"]) == 10 and e["fonteUrl"].startswith("https://") for e in norm_gp))
+verifica("goiania pulsa: fonte marcada", all(e["fonte"] == "Goiânia Pulsa" and e["tipoFonte"] == "institucional" for e in norm_gp))
+verifica("goiania pulsa: cobre Centro de Convenções/Niemeyer",
+         any(re.search(r"conven|niemeyer", coletar.normaliza_nome(e["local"])) for e in norm_gp))
+_gp1 = coletar.normaliza_goianiapulsa({"url": "https://goianiapulsa.tur.br/evento/x/", "data": "24/07/2026", "titulo": "Gala Concert", "local": "Goiânia e Trindade"})
+verifica("goiania pulsa: 'Goiânia e Trindade' fica Goiânia", _gp1["cidade"] == "Goiânia")
 
 # ------------------------------------------------------------- 3. parse datas
 verifica("data pt: 'Sex, 17 Jul - 2026 · 23:00'", coletar._parse_data_pt("Sex, 17 Jul - 2026 · 23:00") == ("2026-07-17", "23:00"))

@@ -21,7 +21,7 @@ Site publicado no GitHub Pages e compartilhável por link, funciona em computado
 O robô `scripts/coletar.py` roda no GitHub Actions **todo dia às 06:00 (Brasília)** e também sob demanda (aba Actions, botão "Run workflow"). Ele:
 
 1. Lê as cidades de `dados/cidades_monitoradas.json`.
-2. Baixa as páginas públicas por cidade da **Sympla** e da **Eventbrite** (plataformas de ingressos) e extrai o JSON embutido nelas.
+2. Baixa as páginas públicas por cidade da **Sympla** e da **Eventbrite** (plataformas de ingressos) e extrai o JSON embutido nelas. Para a região de Goiânia, também coleta o **Goiânia Pulsa** (agenda oficial de turismo), que traz eventos institucionais e de grande porte que não passam por bilheteria: Centro de Convenções de Goiânia, Teatro Goiânia, Centro Cultural Oscar Niemeyer, feiras e congressos. Esses vêm com título, data, local e link para a página do evento (a fonte que o usuário segue para confirmar detalhes).
 3. Normaliza, classifica categorias por palavras-chave, marca gratuidade quando a fonte declara, e registra fonte + URL + horário da coleta em cada evento.
 4. Remove duplicados (mesmo nome + data + cidade, ou mesma URL), mantendo o registro mais completo e guardando a outra fonte como link adicional.
 5. Exclui eventos encerrados e os muito distantes (mais de 240 dias).
@@ -32,7 +32,7 @@ A coleta respeita as fontes: usa só páginas públicas, com pausa entre requisi
 ### Níveis de confiabilidade
 
 - **Plataforma confiável** - evento encontrado em plataforma de ingressos reconhecida, com dados completos.
-- **Informação incompleta** - falta horário ou local; conferir no link da fonte.
+- **Informação incompleta** - falta horário ou local; conferir no link da fonte. Os eventos do Goiânia Pulsa entram aqui, porque a agenda lista data e local mas não o horário.
 
 ## Cidades monitoradas
 
@@ -81,7 +81,8 @@ Não há chaves, senhas nem serviços pagos: o projeto usa apenas páginas públ
 ## Limitações conhecidas
 
 - **Preço**: as listagens das fontes não informam valor, então não há filtro por faixa de preço; quando o usuário pede "até R$ X", o app avisa que o valor deve ser conferido no link. Gratuidade só é marcada quando o próprio título/descrição declara.
-- **Cobertura / busca no Google**: os eventos vêm de Sympla e Eventbrite. A busca **não** usa o Google. O Google não oferece uma API gratuita de eventos estruturados (a "caixa de eventos" dele é montada com raspagem própria e só é acessível por serviços pagos como o SerpAPI); a API de busca genérica devolve páginas soltas, sem data/local/link confiáveis, e exige chave paga — o que quebraria o modelo atual (sem chaves, rodando de graça no GitHub Pages) e ainda arriscaria trazer resultado sem fonte verificável. O caminho confiável para ampliar a cobertura é acrescentar **mais fontes estruturadas** (outras bilheterias como Ingresse, Uhuu, Blueticket; agendas oficiais de teatros e centros culturais). É só pedir a fonte que eu integro.
+- **Eventos gratuitos/culturais só divulgados em jornais**: alguns eventos (ex.: exposições no Bosque dos Buritis) aparecem apenas em portais de notícia, sem página estruturada de agenda, e ainda não são coletados. Os locais prioritários com agenda própria (Centro de Convenções, Teatro Goiânia, Oscar Niemeyer) já são cobertos pelo Goiânia Pulsa. Acrescentar um portal de notícias local é o próximo passo natural para ampliar ainda mais.
+- **Cobertura / busca no Google**: os eventos vêm de Sympla, Eventbrite e Goiânia Pulsa. A busca **não** usa o Google. O Google não oferece uma API gratuita de eventos estruturados (a "caixa de eventos" dele é montada com raspagem própria e só é acessível por serviços pagos como o SerpAPI); a API de busca genérica devolve páginas soltas, sem data/local/link confiáveis, e exige chave paga — o que quebraria o modelo atual (sem chaves, rodando de graça no GitHub Pages) e ainda arriscaria trazer resultado sem fonte verificável. O caminho confiável para ampliar a cobertura é acrescentar **mais fontes estruturadas** (outras bilheterias como Ingresse, Uhuu, Blueticket; agendas oficiais de teatros e centros culturais). É só pedir a fonte que eu integro.
 - **Cidades**: só as monitoradas têm eventos; qualquer cidade pode ser adicionada editando um arquivo.
 - **Atualização**: os dados são do horário da última coleta (mostrado no rodapé e em cada pesquisa), não do instante da consulta.
 - A extração depende do formato das páginas das fontes; se mudarem, o autoteste acusa e o robô mantém os dados anteriores.

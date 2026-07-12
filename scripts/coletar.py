@@ -320,6 +320,102 @@ def coleta_eventbrite(cidade, baixador=baixa):
     return novos
 
 
+# ---------------------------------------------------------------- Goiânia Pulsa
+# Agenda oficial de turismo de Goiânia. Cobre eventos institucionais e de grande
+# porte que nao passam por bilheteria (Centro de Convencoes, Teatro Goiania,
+# Centro Cultural Oscar Niemeyer, Bosque dos Buritis, feiras, congressos). Traz
+# titulo + data + local + link para a pagina do evento (a fonte que a usuaria
+# segue manualmente). Sem hora na listagem -> confiabilidade "incompleta".
+
+GOIANIAPULSA_URL = "https://goianiapulsa.tur.br/eventos/"
+
+# venue -> cidade da regiao metropolitana (padrao Goiania)
+_CIDADES_REGIAO = [
+    ("aparecida", ("Aparecida de Goiânia", "GO")),
+    ("trindade", ("Trindade", "GO")),
+    ("anapolis", ("Anápolis", "GO")),
+    ("caldas novas", ("Caldas Novas", "GO")),
+    ("senador canedo", ("Senador Canedo", "GO")),
+]
+
+
+def _limpa_texto_html(t):
+    import html as _html
+    return _html.unescape(re.sub(r"<[^>]+>", "", t)).strip()
+
+
+def extrai_goianiapulsa(html):
+    eventos = []
+    for m in re.finditer(r'<a href="(https://goianiapulsa\.tur\.br/evento/[^"]+)" class="evento-item.*?</a>', html, re.S):
+        bloco, url = m.group(0), m.group(1)
+        partes = [_limpa_texto_html(t) for t in re.findall(r">([^<]{2,})<", bloco)]
+        partes = [p for p in partes if p]
+        data = next((p for p in partes if re.match(r"\d{1,2}/\d{1,2}/\d{4}", p)), "")
+        resto = [p for p in partes if p != data]
+        titulo = resto[0] if resto else ""
+        local = resto[1] if len(resto) > 1 else ""
+        if titulo and data:
+            eventos.append({"url": url, "data": data, "titulo": titulo, "local": local})
+    return eventos
+
+
+def normaliza_goianiapulsa(bruto):
+    m = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})", bruto["data"])
+    if not m:
+        return None
+    dia, mes, ano = m.groups()
+    data_ini = f"{ano}-{int(mes):02d}-{int(dia):02d}"
+    nome = bruto["titulo"].strip()
+    url = bruto["url"]
+    local = re.split(r"\s+[–-]\s+", bruto.get("local", ""))[0].strip()  # tira sufixo apos "– Estande X"
+    cidade, uf = "Goiânia", "GO"
+    alvo = normaliza_nome(bruto.get("local", ""))
+    if "goiania" not in alvo:  # se Goiania aparece no local, ela prevalece
+        for chave_reg, (c, u) in _CIDADES_REGIAO:
+            if chave_reg in alvo:
+                cidade, uf = c, u
+                break
+    if not nome or not url:
+        return None
+    return {
+        "nome": nome,
+        "descricao": "",
+        "categorias": classifica(nome),
+        "dataInicio": data_ini,
+        "horaInicio": "",
+        "dataFim": "",
+        "horaFim": "",
+        "local": local,
+        "endereco": "",
+        "bairro": "",
+        "cidade": cidade,
+        "uf": uf,
+        "lat": None,
+        "lon": None,
+        "gratuito": eh_gratuito(nome),
+        "online": False,
+        "urlIngresso": url,
+        "urlInfo": url,
+        "imagem": "",
+        "fonte": "Goiânia Pulsa",
+        "fonteUrl": url,
+        "tipoFonte": "institucional",
+        "organizador": "",
+    }
+
+
+def coleta_goianiapulsa(baixador=baixa):
+    try:
+        html = baixador(GOIANIAPULSA_URL)
+    except Exception as erro:
+        log(f"  AVISO goiania pulsa: {erro}")
+        return []
+    novos = [n for n in (normaliza_goianiapulsa(b) for b in extrai_goianiapulsa(html)) if n]
+    log(f"  goiania pulsa: {len(novos)} eventos")
+    time.sleep(PAUSA_ENTRE_REQUISICOES)
+    return novos
+
+
 # --------------------------------------------------- pos-processamento comum
 
 def confianca_de(ev):
@@ -390,6 +486,11 @@ def executa(cidades, baixador=baixa, agora=None):
         log(f"cidade: {cidade['nome']}/{cidade['uf']}")
         todos.extend(coleta_sympla(cidade, baixador))
         todos.extend(coleta_eventbrite(cidade, baixador))
+    # Fonte institucional da regiao de Goiania (eventos que nao passam por bilheteria)
+    monitora_goiania = any(normaliza_nome(c["nome"]) == "goiania" for c in cidades)
+    if monitora_goiania:
+        log("fonte institucional: Goiânia Pulsa")
+        todos.extend(coleta_goianiapulsa(baixador))
     antes = len(todos)
     todos = remove_duplicados(todos)
     duplicados = antes - len(todos)
@@ -406,7 +507,7 @@ def executa(cidades, baixador=baixa, agora=None):
         "fontes": [
             {"nome": "Sympla", "url": "https://www.sympla.com.br"},
             {"nome": "Eventbrite", "url": "https://www.eventbrite.com.br"},
-        ],
+        ] + ([{"nome": "Goiânia Pulsa", "url": "https://goianiapulsa.tur.br"}] if monitora_goiania else []),
         "duplicadosRemovidos": duplicados,
         "eventos": todos,
     }
