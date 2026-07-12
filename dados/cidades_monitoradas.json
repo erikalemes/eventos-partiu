@@ -7,5 +7,13 @@
   {"nome": "Rio de Janeiro", "uf": "RJ", "slugSympla": "rio-de-janeiro-rj", "slugEventbrite": "rio-de-janeiro"},
   {"nome": "Belo Horizonte", "uf": "MG", "slugSympla": "belo-horizonte-mg", "slugEventbrite": "belo-horizonte"},
   {"nome": "Caldas Novas", "uf": "GO", "slugSympla": "caldas-novas-go", "slugEventbrite": "caldas-novas"},
-  {"nome": "São Sebastião", "uf": "SP", "slugSympla": "sao-sebastiao-sp", "slugEventbrite": "s%C3%A3o-sebasti%C3%A3o"}
+  {"nome": "São Sebastião", "uf": "SP", "slugSympla": "sao-sebastiao-sp", "slugEventbrite": "s%C3%A3o-sebasti%C3%A3o"},
+  {"nome": "Caraguatatuba", "uf": "SP", "slugSympla": "caraguatatuba-sp", "slugEventbrite": "caraguatatuba"},
+  {"nome": "Paraibuna", "uf": "SP", "slugSympla": "paraibuna-sp", "slugEventbrite": "paraibuna"},
+  {"nome": "São José dos Campos", "uf": "SP", "slugSympla": "sao-jose-dos-campos-sp", "slugEventbrite": "s%C3%A3o-jos%C3%A9-dos-campos"},
+  {"nome": "Jacareí", "uf": "SP", "slugSympla": "jacarei-sp", "slugEventbrite": "jacare%C3%AD"},
+  {"nome": "Guararema", "uf": "SP", "slugSympla": "guararema-sp", "slugEventbrite": "guararema"},
+  {"nome": "Arujá", "uf": "SP", "slugSympla": "aruja-sp", "slugEventbrite": "aruj%C3%A1"},
+  {"nome": "Mogi das Cruzes", "uf": "SP", "slugSympla": "mogi-das-cruzes-sp", "slugEventbrite": "mogi-das-cruzes"},
+  {"nome": "Guarulhos", "uf": "SP", "slugSympla": "guarulhos-sp", "slugEventbrite": "guarulhos"}
 ]
