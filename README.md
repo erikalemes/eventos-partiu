@@ -36,7 +36,7 @@ A coleta respeita as fontes: usa só páginas públicas, com pausa entre requisi
 
 ## Cidades monitoradas
 
-Goiânia/GO, Aparecida de Goiânia/GO, Anápolis/GO, Brasília/DF, São Paulo/SP, Rio de Janeiro/RJ, Belo Horizonte/MG e Caldas Novas/GO.
+Goiânia/GO, Aparecida de Goiânia/GO, Anápolis/GO, Caldas Novas/GO, Brasília/DF, Rio de Janeiro/RJ, Belo Horizonte/MG e, em São Paulo, São Paulo, São Sebastião e as cidades do trajeto litoral–capital (Caraguatatuba, Paraibuna, São José dos Campos, Jacareí, Guararema, Arujá, Mogi das Cruzes e Guarulhos).
 
 **Para adicionar uma cidade:** inclua uma linha em `dados/cidades_monitoradas.json` com o nome, UF, o slug da Sympla (fim da URL de `https://www.sympla.com.br/eventos/<slug>`) e o slug da Eventbrite (fim da URL de `https://www.eventbrite.com.br/d/brazil--<slug>/all-events/`). A próxima coleta já inclui a cidade.
 
@@ -81,7 +81,7 @@ Não há chaves, senhas nem serviços pagos: o projeto usa apenas páginas públ
 ## Limitações conhecidas
 
 - **Preço**: as listagens das fontes não informam valor, então não há filtro por faixa de preço; quando o usuário pede "até R$ X", o app avisa que o valor deve ser conferido no link. Gratuidade só é marcada quando o próprio título/descrição declara.
-- **Cobertura**: os eventos vêm de Sympla e Eventbrite. Agendas de teatros públicos, shoppings e prefeituras ainda não são coletadas (os sites não oferecem dados estruturados estáveis); muitos desses eventos também vendem pela Sympla e acabam aparecendo.
+- **Cobertura / busca no Google**: os eventos vêm de Sympla e Eventbrite. A busca **não** usa o Google. O Google não oferece uma API gratuita de eventos estruturados (a "caixa de eventos" dele é montada com raspagem própria e só é acessível por serviços pagos como o SerpAPI); a API de busca genérica devolve páginas soltas, sem data/local/link confiáveis, e exige chave paga — o que quebraria o modelo atual (sem chaves, rodando de graça no GitHub Pages) e ainda arriscaria trazer resultado sem fonte verificável. O caminho confiável para ampliar a cobertura é acrescentar **mais fontes estruturadas** (outras bilheterias como Ingresse, Uhuu, Blueticket; agendas oficiais de teatros e centros culturais). É só pedir a fonte que eu integro.
 - **Cidades**: só as monitoradas têm eventos; qualquer cidade pode ser adicionada editando um arquivo.
 - **Atualização**: os dados são do horário da última coleta (mostrado no rodapé e em cada pesquisa), não do instante da consulta.
 - A extração depende do formato das páginas das fontes; se mudarem, o autoteste acusa e o robô mantém os dados anteriores.
