@@ -96,8 +96,19 @@ verifica("datas: exclui evento distante demais", "Longe" not in nomes)
 # -------------------------------------------------------------- 6. categorias
 verifica("categoria: show", "shows" in coletar.classifica("Show da Banda X ao vivo"))
 verifica("categoria: infantil", "infantil" in coletar.classifica("Teatro infantil da Turma"))
-verifica("categoria: dica de colecao", "shows" in coletar.classifica("Nome neutro", dicas=["show-musica-festa"]))
+verifica("categoria: dica de colecao show", "shows" in coletar.classifica("Nome neutro", dicas=["show-musica-festa"]))
+# colecao real da Sympla: peca sem a palavra "teatro" no titulo vira teatro pela colecao
+verifica("categoria: colecao teatro-espetaculo", coletar.classifica("O Alienista", dicas=["teatro-espetaculo"]) == ["teatro"])
+verifica("categoria: colecao experiencias -> lazer", coletar.classifica("Passeio de barco", dicas=["experiencias"])[0] == "lazer")
+verifica("categoria: parque aquatico -> lazer", "lazer" in coletar.classifica("Ingresso Parque Aquático SESC"))
 verifica("categoria: sem match vira outros", coletar.classifica("zzzz qqqq") == ["outros"])
+# uniao de categorias na deduplicacao (nao perde a categoria boa)
+verifica("uniao: descarta outros se ha categoria real", coletar.uniao_categorias(["outros"], ["teatro"]) == ["teatro"])
+verifica("uniao: junta sem repetir", coletar.uniao_categorias(["teatro"], ["shows", "teatro"]) == ["teatro", "shows"])
+verifica("uniao: so outros permanece outros", coletar.uniao_categorias(["outros"], ["outros"]) == ["outros"])
+_t1 = evento_base(categorias=["outros"])
+_t2 = evento_base(categorias=["teatro"], descricao="mais completo")
+verifica("dedup: une categorias das copias", coletar.remove_duplicados([_t1, _t2])[0]["categorias"] == ["teatro"])
 
 # ------------------------------------------------------------ 7. confiabilidade
 verifica("confianca: completo = plataforma", coletar.confianca_de(evento_base()) == "plataforma")

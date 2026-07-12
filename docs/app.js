@@ -19,7 +19,7 @@
     ["esportes", "Esportes"], ["feiras", "Feiras"], ["exposicoes", "Exposições e mostras"],
     ["danca", "Dança"], ["religiosos", "Religiosos"], ["literatura", "Literatura"],
     ["tecnologia", "Tecnologia"], ["negocios", "Negócios"], ["universitarios", "Universitários"],
-    ["outros", "Outros"]
+    ["lazer", "Lazer e atrações"], ["outros", "Outros"]
   ];
   var ROTULO_CATEGORIA = {};
   CATEGORIAS_APP.forEach(function (par) { ROTULO_CATEGORIA[par[0]] = par[1]; });
@@ -42,7 +42,8 @@
     literatura: ["literatura", "livro", "livros", "sarau", "poesia"],
     tecnologia: ["tecnologia", "tech", "startup", "programacao", "games", "geek"],
     negocios: ["negocio", "negocios", "empreendedorismo", "marketing", "vendas"],
-    universitarios: ["universitario", "universitarios", "atletica", "calouros"]
+    universitarios: ["universitario", "universitarios", "atletica", "calouros"],
+    lazer: ["lazer", "parque", "aquatico", "zoologico", "zoo", "passeio", "tour", "atracao", "experiencia", "kart", "boliche"]
   };
 
   // ------------------------------------------------------------- utilidades

@@ -78,14 +78,20 @@ CATEGORIAS = [
     ("tecnologia",   ["tecnologia", "tech", "startup", "programacao", "dev ", "inteligencia artificial", "games", "geek"]),
     ("negocios",     ["negocio", "empreended", "marketing", "vendas", "financas", "investiment", "lideranca"]),
     ("universitarios", ["universitar", "calouros", "atletica", "intercurso"]),
+    ("lazer",        ["parque aquatico", "zoologico", "zoo ", "aquario", "passeio", "city tour", "tour ", "experiencia", "arena laser", "laser game", "kart", "escape", "boliche", "termas", "hot park", "balneario"]),
 ]
 
+# Coleções reais da Sympla (uuid exato das seções da página de cidade) e as
+# etiquetas de categoria da Eventbrite -> categorias do app. As coleções de
+# teatro/shows/infantil sao a fonte mais confiavel de categoria (o titulo de uma
+# peca raramente traz a palavra "teatro").
 MAPA_COLECAO = {
     "show-musica-festa": ["shows"],
-    "teatro": ["teatro"],
+    "teatro-espetaculo": ["teatro"],
     "infantil": ["infantil"],
-    "gastronomia": ["gastronomia"],
     "curso-workshop": ["cursos"],
+    "experiencias": ["lazer"],
+    "gastronomia": ["gastronomia"],
     "congresso-palestra": ["congressos"],
     "esporte": ["esportes"],
     "religioso": ["religiosos"],
@@ -340,6 +346,10 @@ def remove_duplicados(eventos):
         completo = sum(1 for c in campos if ev[c])
         completo_ex = sum(1 for c in campos if existente[c])
         principal, extra = (ev, existente) if completo > completo_ex else (existente, ev)
+        # Une categorias das copias: o mesmo evento aparece em varias colecoes da
+        # Sympla (teatro-espetaculo, em-alta, hoje...); sem unir, a categoria boa
+        # se perde quando a copia vencedora veio de uma colecao generica.
+        principal["categorias"] = uniao_categorias(principal["categorias"], extra["categorias"])
         if extra["fonte"] != principal["fonte"]:
             fontes_extras = principal.setdefault("fontesAdicionais", [])
             if not any(f["url"] == extra["fonteUrl"] for f in fontes_extras):
@@ -347,6 +357,16 @@ def remove_duplicados(eventos):
         if principal is not existente:
             por_chave[chave] = principal
     return list(por_chave.values())
+
+
+def uniao_categorias(a, b):
+    """Junta duas listas de categorias; descarta 'outros' se houver categoria real."""
+    juntas = []
+    for c in list(a) + list(b):
+        if c not in juntas:
+            juntas.append(c)
+    reais = [c for c in juntas if c != "outros"]
+    return reais or ["outros"]
 
 
 def remove_passados_e_distantes(eventos, hoje=None):
