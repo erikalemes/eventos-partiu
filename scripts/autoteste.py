@@ -55,7 +55,15 @@ html_eb = (FIXTURES / "eventbrite_goiania.html").read_text(encoding="utf-8")
 brutos_eb = coletar.extrai_eventbrite(html_eb)
 verifica("eventbrite: extrai eventos do fixture", len(brutos_eb) >= 1, f"so {len(brutos_eb)}")
 norm_eb = [n for n in (coletar.normaliza_eventbrite(b, cidade_teste) for b in brutos_eb) if n]
-verifica("eventbrite: cidade fixada na cidade-alvo", all(e["cidade"] == "Goiânia" for e in norm_eb))
+verifica("eventbrite: so aceita eventos com local na cidade pesquisada", all(e["cidade"] == "Goiânia" and e["uf"] == "GO" for e in norm_eb))
+# regressao do bug de Sao Sebastiao: evento cujo local e em outra cidade nao pode
+# ser carimbado como sendo da cidade pesquisada (nao inventar local).
+_bruto_outra = {"name": "Curso em Santos", "start_date": "2099-01-01", "url": "https://exemplo.com/x",
+                "primary_venue": {"name": "Local", "address": {"city": "Santos", "region": "SP"}}}
+verifica("eventbrite: descarta evento de outra cidade", coletar.normaliza_eventbrite(_bruto_outra, cidade_teste) is None)
+_bruto_mesma = {"name": "Show em Goiania", "start_date": "2099-01-01", "start_time": "20:00", "url": "https://exemplo.com/y",
+                "primary_venue": {"name": "Local", "address": {"city": "Goiânia", "region": "GO"}}}
+verifica("eventbrite: mantem evento da cidade pesquisada", (coletar.normaliza_eventbrite(_bruto_mesma, cidade_teste) or {}).get("cidade") == "Goiânia")
 
 # ------------------------------------------------------------- 3. parse datas
 verifica("data pt: 'Sex, 17 Jul - 2026 · 23:00'", coletar._parse_data_pt("Sex, 17 Jul - 2026 · 23:00") == ("2026-07-17", "23:00"))

@@ -266,11 +266,13 @@ def normaliza_eventbrite(bruto, cidade_alvo):
     end = venue.get("address") or {}
     etiquetas = [t.get("display_name", "") for t in (bruto.get("tags") or [])]
     resumo = (bruto.get("summary") or "").strip()
-    # Eventbrite as vezes poe o bairro no campo cidade; fixa a cidade pesquisada.
+    # A busca da Eventbrite devolve eventos de toda a regiao (Santos, Sao Paulo,
+    # Sao Jose dos Campos... aparecem na busca de Sao Sebastiao). O endereco do
+    # local e a fonte da verdade: so aceitamos o evento se a cidade do local for
+    # de fato a cidade pesquisada. Sem isso, carimbariamos falsamente o local.
     cidade_fonte = (end.get("city") or "").strip()
-    bairro = ""
-    if cidade_fonte and normaliza_nome(cidade_fonte) != normaliza_nome(cidade_alvo["nome"]):
-        bairro = cidade_fonte
+    if not cidade_fonte or normaliza_nome(cidade_fonte) != normaliza_nome(cidade_alvo["nome"]):
+        return None
     return {
         "nome": nome,
         "descricao": resumo[:280],
@@ -281,7 +283,7 @@ def normaliza_eventbrite(bruto, cidade_alvo):
         "horaFim": (bruto.get("end_time") or "")[:5],
         "local": (venue.get("name") or "").strip(),
         "endereco": (end.get("address_1") or "").strip(),
-        "bairro": bairro,
+        "bairro": "",
         "cidade": cidade_alvo["nome"],
         "uf": cidade_alvo["uf"],
         "lat": float(end["latitude"]) if end.get("latitude") else None,
