@@ -26,20 +26,12 @@
   <section class="painel-busca" aria-labelledby="titulo-busca">
     <h1 id="titulo-busca" class="visualmente-oculto">Pesquisar eventos</h1>
 
-    <div class="linha-cidade">
-      <div class="campo campo-cidade">
-        <label for="campo-cidade">Cidade</label>
-        <input type="text" id="campo-cidade" autocomplete="off" spellcheck="false"
-               placeholder="Digite a cidade..." aria-describedby="ajuda-cidade">
-        <div id="lista-cidades" class="autocomplete" role="listbox" hidden></div>
-        <p id="ajuda-cidade" class="ajuda-campo"></p>
-      </div>
-      <div class="campo campo-cep">
-        <label for="campo-cep">ou CEP</label>
-        <input type="text" id="campo-cep" inputmode="numeric" autocomplete="postal-code"
-               placeholder="74000-000" maxlength="9" aria-describedby="ajuda-cep">
-        <p id="ajuda-cep" class="ajuda-campo"></p>
-      </div>
+    <div class="campo campo-cidade">
+      <label for="campo-cidade">Cidade</label>
+      <input type="text" id="campo-cidade" autocomplete="off" spellcheck="false"
+             placeholder="Digite a cidade..." aria-describedby="ajuda-cidade">
+      <div id="lista-cidades" class="autocomplete" role="listbox" hidden></div>
+      <p id="ajuda-cidade" class="ajuda-campo"></p>
     </div>
 
     <div class="campo campo-datas linha-datas">

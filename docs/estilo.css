@@ -80,7 +80,6 @@ input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-v
   background: #fff;
   min-height: 48px;
 }
-.linha-cidade { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .campo-cidade { position: relative; }
 .ajuda-campo { margin: 4px 0 0; font-size: .82rem; color: var(--tinta-suave); min-height: 1em; }
 .ajuda-campo.erro { color: #b3261e; font-weight: 600; }
@@ -235,7 +234,6 @@ input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-v
 
 /* ------------------------------------------------------------ telas maiores */
 @media (min-width: 640px) {
-  .linha-cidade { grid-template-columns: 2fr 1fr; }
   .linha-consulta { flex-direction: row; }
   .linha-consulta input { flex: 1; }
   .cartoes { grid-template-columns: repeat(2, 1fr); }

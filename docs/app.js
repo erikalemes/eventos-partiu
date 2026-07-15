@@ -1,6 +1,6 @@
 /* Eventos - Partiu?! — logica do aplicativo (roda 100% no navegador).
    Dados: window.EVENTOS_DATA (gerado pelo robo scripts/coletar.py)
-          window.CIDADES_BR  (municipios do IBGE, para autocomplete/CEP)
+          window.CIDADES_BR  (municipios do IBGE, para o autocomplete de cidade)
    Busca simples: cidade + data inicial + data final (opcional) + tipo de evento.
    Foco em lazer e entretenimento: cursos so aparecem se o tipo for marcado.
    Nada e inventado: todo evento tem fonte e link. */
@@ -107,7 +107,7 @@
     try { localStorage.setItem("partiu_cidade", JSON.stringify(estado.cidade)); } catch (e) { /* privado */ }
     var ajuda = $("ajuda-cidade");
     if (CIDADES_COM_EVENTOS[chave(nome) + "|" + uf]) {
-      ajuda.textContent = origem === "cep" ? "CEP localizado em " + nome + "/" + uf + "." : "";
+      ajuda.textContent = "";
       ajuda.classList.remove("erro");
     } else {
       ajuda.textContent = nome + "/" + uf + " ainda não é monitorada. Cidades disponíveis: " + cidadesMonitoradasTexto() + ".";
@@ -115,7 +115,7 @@
     }
   }
 
-  // ------------------------------------------------------- autocomplete/CEP
+  // ------------------------------------------------------- autocomplete
 
   function montaAutocomplete() {
     var campo = $("campo-cidade"), lista = $("lista-cidades");
@@ -173,33 +173,16 @@
     });
   }
 
-  function montaCep() {
-    var campo = $("campo-cep"), ajuda = $("ajuda-cep");
-    campo.addEventListener("input", function () {
-      var digitos = campo.value.replace(/\D/g, "").slice(0, 8);
-      campo.value = digitos.length > 5 ? digitos.slice(0, 5) + "-" + digitos.slice(5) : digitos;
-      ajuda.textContent = ""; ajuda.classList.remove("erro");
-      if (digitos.length !== 8) return;
-      ajuda.textContent = "Consultando CEP...";
-      fetch("https://viacep.com.br/ws/" + digitos + "/json/")
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (d.erro || !d.localidade) {
-            ajuda.textContent = "CEP não encontrado."; ajuda.classList.add("erro"); return;
-          }
-          ajuda.textContent = "";
-          defineCidade(d.localidade, d.uf, "cep");
-        })
-        .catch(function () {
-          ajuda.textContent = "Não foi possível consultar o CEP agora."; ajuda.classList.add("erro");
-        });
-    });
-  }
-
   // ------------------------------------------------------- chips de tipo
 
   function montaTipos() {
-    $("chips-categorias").innerHTML = TIPOS_UI.map(function (t) {
+    // ordem alfabetica, com "Todos" na frente e "Outros" no fim
+    var ordenados = [TIPOS_UI[0]].concat(
+      TIPOS_UI.filter(function (t) { return t[0] !== "todos" && t[0] !== "outros"; })
+        .sort(function (a, b) { return a[1].localeCompare(b[1], "pt-BR"); }),
+      TIPOS_UI.filter(function (t) { return t[0] === "outros"; })
+    );
+    $("chips-categorias").innerHTML = ordenados.map(function (t) {
       var marcado = t[0] === "todos" ? " checked" : "";
       return '<label><input type="checkbox" value="' + t[0] + '"' + marcado + "> " + escapaHtml(t[1]) + "</label>";
     }).join("");
@@ -466,7 +449,6 @@
 
   function arranca() {
     montaAutocomplete();
-    montaCep();
     montaTipos();
 
     var salva = null;
