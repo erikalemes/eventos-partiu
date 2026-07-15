@@ -42,74 +42,31 @@
       </div>
     </div>
 
-    <div class="campo">
-      <label for="campo-consulta">O que você gostaria de fazer?</label>
-      <div class="linha-consulta">
-        <input type="text" id="campo-consulta" maxlength="200"
-               placeholder="Ex.: shows gratuitos neste fim de semana">
-        <button type="button" id="botao-pesquisar" class="botao-principal">Pesquisar eventos</button>
+    <div class="campo campo-datas linha-datas">
+      <div>
+        <label for="filtro-data-ini">Data inicial</label>
+        <input type="date" id="filtro-data-ini" aria-describedby="ajuda-datas">
+      </div>
+      <div>
+        <label for="filtro-data-fim">Data final <small>(opcional)</small></label>
+        <input type="date" id="filtro-data-fim">
       </div>
     </div>
+    <p id="ajuda-datas" class="ajuda-campo">Preencha só a data inicial para ver um único dia. Vazio mostra tudo a partir de hoje.</p>
 
-    <div class="exemplos" aria-label="Exemplos de pesquisa">
-      <button type="button" class="exemplo">Eventos neste fim de semana</button>
-      <button type="button" class="exemplo">Shows hoje à noite</button>
-      <button type="button" class="exemplo">Teatro no domingo</button>
-      <button type="button" class="exemplo">Eventos gratuitos</button>
-      <button type="button" class="exemplo">Cursos e oficinas</button>
-      <button type="button" class="exemplo">Gastronomia em Goiânia</button>
-      <button type="button" class="exemplo">Algo para fazer em casal</button>
-    </div>
+    <fieldset class="campo grupo-categorias">
+      <legend>Tipo de evento</legend>
+      <div class="chips" id="chips-categorias"></div>
+      <p class="ajuda-campo">O foco é lazer e entretenimento. Cursos e oficinas só aparecem se você marcar o tipo.</p>
+    </fieldset>
 
-    <details class="filtros">
-      <summary>Filtros</summary>
-      <div class="filtros-corpo">
-        <div class="campo">
-          <label for="filtro-periodo">Período</label>
-          <select id="filtro-periodo">
-            <option value="tudo">Qualquer data</option>
-            <option value="hoje">Hoje</option>
-            <option value="amanha">Amanhã</option>
-            <option value="fds">Este fim de semana</option>
-            <option value="prox-fds">Próximo fim de semana</option>
-            <option value="semana">Esta semana</option>
-            <option value="prox-semana">Próxima semana</option>
-            <option value="mes">Este mês</option>
-            <option value="prox-mes">Próximo mês</option>
-            <option value="datas">Escolher datas...</option>
-          </select>
-        </div>
-        <div class="campo campo-datas" id="grupo-datas" hidden>
-          <label for="filtro-data-ini">De</label>
-          <input type="date" id="filtro-data-ini">
-          <label for="filtro-data-fim">até</label>
-          <input type="date" id="filtro-data-fim">
-        </div>
-        <div class="campo">
-          <label for="filtro-horario">Período do dia</label>
-          <select id="filtro-horario">
-            <option value="any">Qualquer horário</option>
-            <option value="manha">Manhã (até 12h)</option>
-            <option value="tarde">Tarde (12h às 18h)</option>
-            <option value="noite">Noite (após 18h)</option>
-          </select>
-        </div>
-        <fieldset class="campo grupo-categorias">
-          <legend>Categorias</legend>
-          <div class="chips" id="chips-categorias"></div>
-        </fieldset>
-        <div class="campo opcoes-extras">
-          <label class="opcao-caixa"><input type="checkbox" id="filtro-gratuito"> Somente gratuitos <small>(quando a fonte informa)</small></label>
-          <label class="opcao-caixa"><input type="checkbox" id="filtro-presencial" checked> Somente presenciais</label>
-        </div>
-      </div>
-    </details>
+    <button type="button" id="botao-pesquisar" class="botao-principal botao-largo">Pesquisar eventos</button>
   </section>
 
   <!-- ====================== CARREGANDO ====================== -->
   <section id="painel-carregando" class="painel-carregando" hidden aria-live="polite">
     <div class="girador" aria-hidden="true"></div>
-    <p id="texto-carregando">Interpretando sua solicitação...</p>
+    <p id="texto-carregando">Filtrando os eventos coletados...</p>
   </section>
 
   <!-- ====================== RESULTADOS ====================== -->
@@ -121,7 +78,6 @@
         <label for="ordenar" class="visualmente-oculto">Ordenar por</label>
         <select id="ordenar" aria-label="Ordenar resultados">
           <option value="data">Mais próximos</option>
-          <option value="relevancia">Mais relevantes</option>
           <option value="gratuitos">Gratuitos primeiro</option>
         </select>
         <button type="button" id="botao-pdf" class="botao-secundario">Gerar PDF</button>
@@ -141,7 +97,7 @@
 
 <footer class="rodape">
   <div class="miolo">
-    <p><strong>Eventos - Partiu?!</strong> mostra somente eventos reais coletados de plataformas públicas de ingressos
+    <p><strong>Eventos - Partiu?!</strong> mostra somente eventos reais coletados de fontes públicas
       (<span id="rodape-fontes"></span>), sempre com link para a página original. Nada é inventado: preço e detalhes
       devem ser confirmados no site oficial do evento.</p>
     <p id="rodape-atualizacao"></p>

@@ -78,6 +78,25 @@ verifica("goiania pulsa: cobre Centro de Convenções/Niemeyer",
 _gp1 = coletar.normaliza_goianiapulsa({"url": "https://goianiapulsa.tur.br/evento/x/", "data": "24/07/2026", "titulo": "Gala Concert", "local": "Goiânia e Trindade"})
 verifica("goiania pulsa: 'Goiânia e Trindade' fica Goiânia", _gp1["cidade"] == "Goiânia")
 
+# ------------------------------------ 2c. CCGO e Ulysses (fontes oficiais)
+html_ccgo = (FIXTURES / "ccgo.html").read_text(encoding="utf-8", errors="ignore")
+norm_ccgo = [n for n in (coletar.normaliza_ccgo(b) for b in coletar.extrai_ccgo(html_ccgo)) if n]
+verifica("ccgo: extrai eventos do fixture", len(norm_ccgo) >= 20, f"so {len(norm_ccgo)}")
+verifica("ccgo: todos em Goiânia com fonte oficial", all(e["cidade"] == "Goiânia" and e["tipoFonte"] == "oficial" for e in norm_ccgo))
+verifica("ccgo: intervalo '22 a 24/10/2026'", coletar._parse_intervalo_ddmm("22 a 24/10/2026") == ("2026-10-22", "2026-10-24"))
+verifica("ccgo: data simples", coletar._parse_intervalo_ddmm("23/10/2026 - Teatro") == ("2026-10-23", ""))
+
+html_uly = (FIXTURES / "ulysses.html").read_text(encoding="utf-8", errors="ignore")
+norm_uly = [n for n in (coletar.normaliza_ulysses(b) for b in coletar.extrai_ulysses(html_uly)) if n]
+verifica("ulysses: extrai eventos do fixture", len(norm_uly) >= 5, f"so {len(norm_uly)}")
+verifica("ulysses: Brasília, oficial, com hora", all(e["cidade"] == "Brasília" and e["tipoFonte"] == "oficial" and e["horaInicio"] for e in norm_uly))
+
+# datas por extenso (Shopping Cerrado)
+verifica("extenso: '16 a 19 de Julho'", coletar.extrai_datas_texto_pt("de 16 a 19 de Julho", "2026-07-12") == ("2026-07-16", "2026-07-19"))
+verifica("extenso: 'até 19 de Julho' vira em cartaz", coletar.extrai_datas_texto_pt("promoção até 19 de Julho", "2026-07-12") == ("2026-07-12", "2026-07-19"))
+verifica("extenso: dia único", coletar.extrai_datas_texto_pt("acontece dia 20 de junho de 2026", "2026-07-12") == ("2026-06-20", ""))
+verifica("extenso: sem ano NUNCA vira ano seguinte", coletar.extrai_datas_texto_pt("dia 25 de abril", "2026-07-12")[0] == "2026-04-25")
+
 # ------------------------------------------------------------- 3. parse datas
 verifica("data pt: 'Sex, 17 Jul - 2026 · 23:00'", coletar._parse_data_pt("Sex, 17 Jul - 2026 · 23:00") == ("2026-07-17", "23:00"))
 verifica("data pt: sem hora", coletar._parse_data_pt("Dom, 1 Mar - 2027") == ("2027-03-01", ""))
@@ -126,6 +145,8 @@ verifica("dedup: une categorias das copias", coletar.remove_duplicados([_t1, _t2
 # ------------------------------------------------------------ 7. confiabilidade
 verifica("confianca: completo = plataforma", coletar.confianca_de(evento_base()) == "plataforma")
 verifica("confianca: sem hora = incompleta", coletar.confianca_de(evento_base(horaInicio="")) == "incompleta")
+verifica("confianca: fonte oficial = oficial", coletar.confianca_de(evento_base(tipoFonte="oficial", horaInicio="")) == "oficial")
+verifica("confianca: oficial sem local = incompleta", coletar.confianca_de(evento_base(tipoFonte="oficial", local="")) == "incompleta")
 
 # ------------------------------------------------------- 8. dados.js publicado
 arq = RAIZ / "docs" / "dados.js"

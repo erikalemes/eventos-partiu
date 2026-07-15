@@ -127,6 +127,13 @@ input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-v
 .campo-datas { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .campo-datas label { margin: 0; }
 .campo-datas input { width: auto; flex: 1; min-width: 140px; }
+.linha-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; margin-bottom: 4px; }
+.linha-datas > div { display: flex; flex-direction: column; }
+.linha-datas label { margin-bottom: 5px; font-weight: 600; font-size: .9rem; }
+.linha-datas label small { color: var(--tinta-suave); font-weight: 400; }
+.linha-datas input { width: 100%; min-width: 0; }
+.grupo-categorias { border: 0; padding: 0; margin: 14px 0; }
+.botao-largo { width: 100%; margin-top: 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips label {
   display: inline-flex; align-items: center; gap: 6px;
@@ -194,6 +201,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-v
   color: var(--violeta-escuro); border: 1px solid var(--borda);
 }
 .etiqueta.gratuito { background: #e3f6ec; color: var(--verde); border-color: #bde7cf; }
+.etiqueta.confianca-oficial { background: #e3f6ec; color: var(--verde); border-color: #bde7cf; }
 .etiqueta.confianca-plataforma { background: #e8f1fd; color: #1751a8; border-color: #c6dcf7; }
 .etiqueta.confianca-incompleta { background: #fdf3e0; color: var(--ambar); border-color: #f3ddb0; }
 .etiqueta.online { background: #efe9fb; color: var(--violeta); }

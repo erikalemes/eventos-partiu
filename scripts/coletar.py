@@ -416,10 +416,263 @@ def coleta_goianiapulsa(baixador=baixa):
     return novos
 
 
+# --------------------------------------------------------------- CCGO
+# Centro de Convencoes de Goiania (fonte oficial, prioridade da usuaria).
+# Cards do tipo: titulo + "23/10/2026 - Teatro Rio Vermelho" ou "22 a 24/10/2026 - Espaco Cerrado".
+
+CCGO_URL = "https://www.ccgo.com.br/eventos/"
+
+
+def _parse_intervalo_ddmm(texto):
+    """'22 a 24/10/2026' -> ('2026-10-22','2026-10-24'); '23/10/2026' -> (data, '')."""
+    m = re.search(r"(\d{1,2})(?:\s*(?:a|e)\s*(\d{1,2}))?/(\d{1,2})/(\d{4})", texto)
+    if not m:
+        return "", ""
+    d1, d2, mes, ano = m.groups()
+    ini = f"{ano}-{int(mes):02d}-{int(d1):02d}"
+    fim = f"{ano}-{int(mes):02d}-{int(d2):02d}" if d2 else ""
+    return ini, fim
+
+
+def extrai_ccgo(html):
+    eventos = []
+    blocos = re.findall(r"<div data-ajax-id='\d+' class='[^']*grid-entry.*?(?=<div data-ajax-id='|\Z)", html, re.S)
+    for bloco in blocos:
+        m_link = re.search(r'href="(https://www\.ccgo\.com\.br/[^"]+)"', bloco)
+        textos = [_limpa_texto_html(t) for t in re.findall(r">([^<>]{3,200})<", bloco)]
+        textos = [t for t in textos if t]
+        i_data = next((i for i, t in enumerate(textos) if re.search(r"\d{1,2}/\d{1,2}/\d{4}", t)), -1)
+        if i_data < 0 or not m_link:
+            continue
+        titulo = " | ".join(textos[:i_data]).strip(" |")
+        linha_data = textos[i_data]
+        local = linha_data.split(" - ", 1)[1].strip() if " - " in linha_data else ""
+        eventos.append({"titulo": titulo, "linhaData": linha_data, "local": local, "url": m_link.group(1)})
+    return eventos
+
+
+def normaliza_ccgo(bruto):
+    data_ini, data_fim = _parse_intervalo_ddmm(bruto["linhaData"])
+    if not bruto["titulo"] or not data_ini:
+        return None
+    return {
+        "nome": bruto["titulo"],
+        "descricao": "",
+        "categorias": classifica(bruto["titulo"]),
+        "dataInicio": data_ini,
+        "horaInicio": "",
+        "dataFim": data_fim,
+        "horaFim": "",
+        "local": ("Centro de Convenções de Goiânia" + (" - " + bruto["local"] if bruto["local"] else "")),
+        "endereco": "Rua 4, 1400, Setor Central",
+        "bairro": "Setor Central",
+        "cidade": "Goiânia",
+        "uf": "GO",
+        "lat": None, "lon": None,
+        "gratuito": eh_gratuito(bruto["titulo"]),
+        "online": False,
+        "urlIngresso": bruto["url"],
+        "urlInfo": bruto["url"],
+        "imagem": "",
+        "fonte": "Centro de Convenções GO",
+        "fonteUrl": bruto["url"],
+        "tipoFonte": "oficial",
+        "organizador": "",
+    }
+
+
+def coleta_ccgo(baixador=baixa):
+    try:
+        html = baixador(CCGO_URL)
+    except Exception as erro:
+        log(f"  AVISO ccgo: {erro}")
+        return []
+    novos = [n for n in (normaliza_ccgo(b) for b in extrai_ccgo(html)) if n]
+    log(f"  centro de convencoes goiania: {len(novos)} eventos")
+    time.sleep(PAUSA_ENTRE_REQUISICOES)
+    return novos
+
+
+# --------------------------------------------------------------- Ulysses (Brasilia)
+# Centro de Convencoes Ulysses Guimaraes: agenda oficial com JSON-LD schema.org/Event.
+
+ULYSSES_URL = "https://ulysses.tur.br/agenda/"
+
+
+def extrai_ulysses(html):
+    eventos = []
+    for m in re.finditer(r'<script type=.application/ld\+json.>(.*?)</script>', html, re.S):
+        try:
+            dados = json.loads(m.group(1))
+        except json.JSONDecodeError:
+            continue
+        for item in (dados if isinstance(dados, list) else [dados]):
+            if isinstance(item, dict) and "Event" in str(item.get("@type", "")):
+                eventos.append(item)
+    return eventos
+
+
+def normaliza_ulysses(bruto):
+    import html as _html
+    nome = _html.unescape((bruto.get("name") or "")).strip()
+    ini = (bruto.get("startDate") or "")[:16]
+    url = bruto.get("url") or ""
+    if not nome or len(ini) < 10 or not url:
+        return None
+    auditorio = ((bruto.get("location") or {}).get("name") or "").strip()
+    return {
+        "nome": nome,
+        "descricao": _html.unescape((bruto.get("description") or "")).strip()[:280],
+        "categorias": classifica(nome),
+        "dataInicio": ini[:10],
+        "horaInicio": ini[11:16],
+        "dataFim": (bruto.get("endDate") or "")[:10],
+        "horaFim": (bruto.get("endDate") or "")[11:16],
+        "local": ("Centro de Convenções Ulysses Guimarães" + (" - " + auditorio if auditorio else "")),
+        "endereco": "SDC Eixo Monumental",
+        "bairro": "",
+        "cidade": "Brasília",
+        "uf": "DF",
+        "lat": None, "lon": None,
+        "gratuito": eh_gratuito(nome),
+        "online": False,
+        "urlIngresso": url,
+        "urlInfo": url,
+        "imagem": bruto.get("image") or "",
+        "fonte": "Ulysses Centro de Convenções",
+        "fonteUrl": url,
+        "tipoFonte": "oficial",
+        "organizador": "",
+    }
+
+
+def coleta_ulysses(baixador=baixa):
+    try:
+        html = baixador(ULYSSES_URL)
+    except Exception as erro:
+        log(f"  AVISO ulysses: {erro}")
+        return []
+    novos = [n for n in (normaliza_ulysses(b) for b in extrai_ulysses(html)) if n]
+    log(f"  ulysses (brasilia): {len(novos)} eventos")
+    time.sleep(PAUSA_ENTRE_REQUISICOES)
+    return novos
+
+
+# --------------------------------------------------------------- Shopping Cerrado
+# Pagina "Acontece": lista de posts; a data fica no texto do post ("16 de Julho",
+# "ate 19 de Julho"). Boa fonte de eventos infantis e gratuitos em Goiania.
+
+CERRADO_URL = "https://shoppingcerrado.com.br/acontece/"
+MESES_EXTENSO = {"janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6,
+                 "julho": 7, "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
+
+
+def _data_extenso(dia, mes_txt, ano, hoje):
+    mes = MESES_EXTENSO.get(sem_acento(mes_txt).lower())
+    if not mes:
+        return ""
+    # Sem ano explicito, assume o ano corrente. NUNCA chuta ano futuro: um post
+    # antigo com data passada deve ser filtrado como encerrado, nao virar um
+    # "evento" inventado no ano seguinte.
+    ano = int(ano) if ano else int(hoje[:4])
+    try:
+        datetime(int(ano), mes, int(dia))
+    except ValueError:
+        return ""
+    return f"{ano}-{mes:02d}-{int(dia):02d}"
+
+
+def extrai_datas_texto_pt(texto, hoje):
+    """Acha intervalo de datas em texto corrido pt-BR. Devolve (ini, fim) ou ('','')."""
+    t = " " + re.sub(r"\s+", " ", texto) + " "
+    # "de 16 a 19 de julho( de 2026)?" / "16 a 19 de julho"
+    m = re.search(r"(\d{1,2})\s*(?:de\s+[a-zçA-ZÇ]+\s+)?(?:a|à|ate|até)\s*(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)(?:\s+de\s+(\d{4}))?", t)
+    if m:
+        d1, d2, mes, ano = m.groups()
+        ini = _data_extenso(d1, mes, ano, hoje)
+        fim = _data_extenso(d2, mes, ano, hoje)
+        if ini and fim:
+            return ini, fim
+    # "ate 19 de julho" -> em cartaz ate la
+    m = re.search(r"(?:ate|até)\s+(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)(?:\s+de\s+(\d{4}))?", t, re.I)
+    if m:
+        fim = _data_extenso(m.group(1), m.group(2), m.group(3), hoje)
+        if fim:
+            return hoje, fim
+    # "dia 19 de julho( de 2026)?" ou primeira data por extenso
+    m = re.search(r"(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)(?:\s+de\s+(\d{4}))?", t)
+    if m:
+        ini = _data_extenso(m.group(1), m.group(2), m.group(3), hoje)
+        if ini:
+            return ini, ""
+    return "", ""
+
+
+def coleta_cerrado(baixador=baixa, hoje=None):
+    hoje = hoje or datetime.now(FUSO_BRASILIA).strftime("%Y-%m-%d")
+    try:
+        listagem = baixador(CERRADO_URL)
+    except Exception as erro:
+        log(f"  AVISO shopping cerrado: {erro}")
+        return []
+    urls = []
+    for u in re.findall(r'href="(https://shoppingcerrado\.com\.br/acontece/[^"]{5,})"', listagem):
+        if u.rstrip("/") != CERRADO_URL.rstrip("/") and u not in urls:
+            urls.append(u)
+    eventos = []
+    for u in urls[:15]:  # limite de cortesia
+        try:
+            pagina = baixador(u)
+        except Exception:
+            continue
+        m_t = re.search(r"<h1[^>]*>(.*?)</h1>", pagina, re.S) or re.search(r"<title>(.*?)</title>", pagina, re.S)
+        titulo = _limpa_texto_html(m_t.group(1)) if m_t else ""
+        titulo = re.split(r"\s+[–|-]\s+", titulo)[0]  # tira sufixo "– Cerrado – O shopping..."
+        titulo = re.sub(r"[\U0001F000-\U0001FAFF☀-➿]+", "", titulo).strip()  # tira emojis
+        sem_estilos = re.sub(r"<(style|script)[^>]*>.*?</\1>", " ", pagina, flags=re.S)
+        corpo = re.sub(r"<[^>]+>", " ", sem_estilos)
+        ini, fim = extrai_datas_texto_pt(corpo, hoje)
+        if not titulo or not ini:
+            continue  # sem data confiavel, nao inventa
+        eventos.append({
+            "nome": titulo,
+            "descricao": "",
+            "categorias": classifica(titulo),
+            "dataInicio": ini,
+            "horaInicio": "",
+            "dataFim": fim,
+            "horaFim": "",
+            "local": "Shopping Cerrado",
+            "endereco": "Av. Anhanguera, 10790",
+            "bairro": "Setor Aeroviário",
+            "cidade": "Goiânia",
+            "uf": "GO",
+            "lat": None, "lon": None,
+            "gratuito": eh_gratuito(titulo, corpo[:8000]),
+            "online": False,
+            "urlIngresso": u,
+            "urlInfo": u,
+            "imagem": "",
+            "fonte": "Shopping Cerrado",
+            "fonteUrl": u,
+            "tipoFonte": "oficial",
+            "organizador": "",
+        })
+        time.sleep(PAUSA_ENTRE_REQUISICOES)
+    log(f"  shopping cerrado: {len(eventos)} eventos")
+    return eventos
+
+
 # --------------------------------------------------- pos-processamento comum
 
 def confianca_de(ev):
-    if not ev["horaInicio"] or not ev["local"]:
+    if not ev["local"]:
+        return "incompleta"
+    if ev["tipoFonte"] == "oficial":
+        # confirmado no site oficial do local/organizador (hora pode faltar,
+        # mas a existencia do evento esta confirmada na origem)
+        return "oficial"
+    if not ev["horaInicio"]:
         return "incompleta"
     return "plataforma"
 
@@ -486,11 +739,18 @@ def executa(cidades, baixador=baixa, agora=None):
         log(f"cidade: {cidade['nome']}/{cidade['uf']}")
         todos.extend(coleta_sympla(cidade, baixador))
         todos.extend(coleta_eventbrite(cidade, baixador))
-    # Fonte institucional da regiao de Goiania (eventos que nao passam por bilheteria)
-    monitora_goiania = any(normaliza_nome(c["nome"]) == "goiania" for c in cidades)
+    # Fontes oficiais/institucionais por regiao (eventos que nao passam por bilheteria)
+    monitora = {normaliza_nome(c["nome"]) for c in cidades}
+    monitora_goiania = "goiania" in monitora
+    monitora_brasilia = "brasilia" in monitora
     if monitora_goiania:
-        log("fonte institucional: Goiânia Pulsa")
+        log("fontes locais de Goiânia: Goiânia Pulsa, CCGO, Shopping Cerrado")
         todos.extend(coleta_goianiapulsa(baixador))
+        todos.extend(coleta_ccgo(baixador))
+        todos.extend(coleta_cerrado(baixador))
+    if monitora_brasilia:
+        log("fontes locais de Brasília: Ulysses")
+        todos.extend(coleta_ulysses(baixador))
     antes = len(todos)
     todos = remove_duplicados(todos)
     duplicados = antes - len(todos)
@@ -507,7 +767,13 @@ def executa(cidades, baixador=baixa, agora=None):
         "fontes": [
             {"nome": "Sympla", "url": "https://www.sympla.com.br"},
             {"nome": "Eventbrite", "url": "https://www.eventbrite.com.br"},
-        ] + ([{"nome": "Goiânia Pulsa", "url": "https://goianiapulsa.tur.br"}] if monitora_goiania else []),
+        ] + ([
+            {"nome": "Goiânia Pulsa", "url": "https://goianiapulsa.tur.br"},
+            {"nome": "Centro de Convenções GO", "url": "https://www.ccgo.com.br/eventos/"},
+            {"nome": "Shopping Cerrado", "url": "https://shoppingcerrado.com.br/acontece/"},
+        ] if monitora_goiania else []) + ([
+            {"nome": "Ulysses Centro de Convenções", "url": "https://ulysses.tur.br/agenda/"},
+        ] if monitora_brasilia else []),
         "duplicadosRemovidos": duplicados,
         "eventos": todos,
     }

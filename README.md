@@ -8,8 +8,8 @@ Site publicado no GitHub Pages e compartilhável por link, funciona em computado
 ## O que o app faz
 
 - Busca por **nome da cidade** (com autocomplete de todos os 5.571 municípios do IBGE) ou por **CEP** (convertido em cidade pelo ViaCEP). A busca por raio em km não foi adotada porque as fontes de eventos não fornecem coordenadas confiáveis para todos os eventos; o CEP resolve o mesmo problema de forma mais confiável.
-- Aceita **consulta em linguagem natural**: "shows em Brasília no próximo mês", "teatro infantil no domingo", "eventos gratuitos neste fim de semana". A interpretação identifica cidade, datas relativas (hoje, amanhã, fim de semana, próxima semana, este mês...), categorias, gratuidade e período do dia.
-- **Filtros combináveis**: período (inclusive intervalo de datas), período do dia, 18 categorias, somente gratuitos, somente presenciais.
+- **Busca simples e direta**: data inicial, data final (opcional; só a inicial = um único dia; vazio = tudo a partir de hoje) e tipo de evento, com o botão "Todos" e os tipos individuais.
+- **Foco em lazer e entretenimento** (shows ao vivo, teatro, festas, gastronomia, infantil, atrações): cursos e oficinas só aparecem na lista se o usuário marcar o tipo "Cursos e oficinas".
 - **Resultados agrupados por data**, com grupo "Em cartaz" para eventos longos ainda vigentes; ordenação por data, relevância ou gratuitos primeiro.
 - Cada cartão mostra nome, data, hora, local, endereço, bairro, cidade, categorias, selo de gratuidade, **nível de confiabilidade**, botões de **Ingressos/Inscrição** e **Mais informações** (abrem a página original em nova aba) e a **fonte com link**. Nada é inventado: preço não informado pela fonte aparece como "consulte no site oficial".
 - **Gerar PDF**: usa a impressão do navegador com layout próprio; os links continuam clicáveis no PDF salvo.
@@ -21,7 +21,7 @@ Site publicado no GitHub Pages e compartilhável por link, funciona em computado
 O robô `scripts/coletar.py` roda no GitHub Actions **todo dia às 06:00 (Brasília)** e também sob demanda (aba Actions, botão "Run workflow"). Ele:
 
 1. Lê as cidades de `dados/cidades_monitoradas.json`.
-2. Baixa as páginas públicas por cidade da **Sympla** e da **Eventbrite** (plataformas de ingressos) e extrai o JSON embutido nelas. Para a região de Goiânia, também coleta o **Goiânia Pulsa** (agenda oficial de turismo), que traz eventos institucionais e de grande porte que não passam por bilheteria: Centro de Convenções de Goiânia, Teatro Goiânia, Centro Cultural Oscar Niemeyer, feiras e congressos. Esses vêm com título, data, local e link para a página do evento (a fonte que o usuário segue para confirmar detalhes).
+2. Baixa as páginas públicas por cidade da **Sympla** e da **Eventbrite** (plataformas de ingressos) e extrai o JSON embutido nelas. Para Goiânia, coleta também três fontes oficiais locais: **Goiânia Pulsa** (agenda de turismo, cobre Centro Cultural Oscar Niemeyer, Teatro Goiânia, feiras e congressos), **Centro de Convenções de Goiânia** (ccgo.com.br, agenda oficial do espaço) e **Shopping Cerrado** (eventos infantis e gratuitos). Para Brasília, coleta o **Centro de Convenções Ulysses Guimarães** (agenda oficial com data e hora). O catálogo completo de fontes sondadas, com o motivo das que ficaram de fora, está em `dados/fontes_catalogo.md`.
 3. Normaliza, classifica categorias por palavras-chave, marca gratuidade quando a fonte declara, e registra fonte + URL + horário da coleta em cada evento.
 4. Remove duplicados (mesmo nome + data + cidade, ou mesma URL), mantendo o registro mais completo e guardando a outra fonte como link adicional.
 5. Exclui eventos encerrados e os muito distantes (mais de 240 dias).
@@ -31,6 +31,7 @@ A coleta respeita as fontes: usa só páginas públicas, com pausa entre requisi
 
 ### Níveis de confiabilidade
 
+- **Fonte oficial** - evento confirmado no site oficial do local ou organizador (Centro de Convenções, Ulysses, Shopping Cerrado).
 - **Plataforma confiável** - evento encontrado em plataforma de ingressos reconhecida, com dados completos.
 - **Informação incompleta** - falta horário ou local; conferir no link da fonte. Os eventos do Goiânia Pulsa entram aqui, porque a agenda lista data e local mas não o horário.
 
