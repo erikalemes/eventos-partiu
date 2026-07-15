@@ -18,6 +18,7 @@ Aparecida e Brasília". Status de implementação após sondagem técnica real d
 
 | Fonte | Motivo |
 |---|---|
+| BaladAPP (baladapp.com.br) | sem listagem pública por cidade (home em JavaScript, sem sitemap/API); páginas individuais são legíveis, então entra via `dados/eventos_avulsos.json` (link a link) |
 | Boulevard Brasília (acontece) | página montada por JavaScript (Next.js sem dados no HTML) |
 | Teatro SESI (programacao) | conteúdo montado por JavaScript |
 | Bilheteria Digital /GO | conteúdo montado por JavaScript |

@@ -91,6 +91,18 @@ norm_uly = [n for n in (coletar.normaliza_ulysses(b) for b in coletar.extrai_uly
 verifica("ulysses: extrai eventos do fixture", len(norm_uly) >= 5, f"so {len(norm_uly)}")
 verifica("ulysses: Brasília, oficial, com hora", all(e["cidade"] == "Brasília" and e["tipoFonte"] == "oficial" and e["horaInicio"] for e in norm_uly))
 
+# ------------------------------------ 2d. links avulsos (BaladAPP etc.)
+html_bap = (FIXTURES / "baladapp_happyland.html").read_text(encoding="utf-8", errors="ignore")
+_av = coletar.extrai_avulso(html_bap, "https://baladapp.com.br/pt-BR/eventos/happy-land-2026/8948", "2026-07-15")
+verifica("avulso: extrai titulo/datas/cidade do BaladAPP",
+         _av is not None and _av["nome"] == "Happy Land 2026" and _av["dataInicio"] == "2026-07-03"
+         and _av["dataFim"] == "2026-08-02" and _av["cidade"] == "Goiânia" and _av["uf"] == "GO")
+verifica("avulso: local extraido", (_av or {}).get("local") == "Pecuária de Goiânia")
+verifica("avulso: fonte pelo dominio", (_av or {}).get("fonte") == "BaladAPP")
+verifica("avulso: pagina sem dados minimos e descartada",
+         coletar.extrai_avulso("<html><title>Oi</title></html>", "https://x.com/e/1", "2026-07-15") is None)
+verifica("avulso: intervalo cruzando meses", coletar.extrai_datas_texto_pt("Data: 03 de Julho à 02 de Agosto de 2026", "2026-07-15") == ("2026-07-03", "2026-08-02"))
+
 # datas por extenso (Shopping Cerrado)
 verifica("extenso: '16 a 19 de Julho'", coletar.extrai_datas_texto_pt("de 16 a 19 de Julho", "2026-07-12") == ("2026-07-16", "2026-07-19"))
 verifica("extenso: 'até 19 de Julho' vira em cartaz", coletar.extrai_datas_texto_pt("promoção até 19 de Julho", "2026-07-12") == ("2026-07-12", "2026-07-19"))

@@ -585,8 +585,16 @@ def _data_extenso(dia, mes_txt, ano, hoje):
 def extrai_datas_texto_pt(texto, hoje):
     """Acha intervalo de datas em texto corrido pt-BR. Devolve (ini, fim) ou ('','')."""
     t = " " + re.sub(r"\s+", " ", texto) + " "
+    # "03 de Julho à 02 de Agosto( de 2026)?" - intervalo cruzando meses
+    m = re.search(r"(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)\s+(?:a|à|ate|até)\s+(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)(?:\s+de\s+(\d{4}))?", t)
+    if m:
+        d1, mes1, d2, mes2, ano = m.groups()
+        ini = _data_extenso(d1, mes1, ano, hoje)
+        fim = _data_extenso(d2, mes2, ano, hoje)
+        if ini and fim:
+            return ini, fim
     # "de 16 a 19 de julho( de 2026)?" / "16 a 19 de julho"
-    m = re.search(r"(\d{1,2})\s*(?:de\s+[a-zçA-ZÇ]+\s+)?(?:a|à|ate|até)\s*(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)(?:\s+de\s+(\d{4}))?", t)
+    m = re.search(r"(\d{1,2})\s*(?:a|à|ate|até)\s*(\d{1,2})\s+de\s+([a-zçA-ZÇ]+)(?:\s+de\s+(\d{4}))?", t)
     if m:
         d1, d2, mes, ano = m.groups()
         ini = _data_extenso(d1, mes, ano, hoje)
@@ -660,6 +668,106 @@ def coleta_cerrado(baixador=baixa, hoje=None):
         })
         time.sleep(PAUSA_ENTRE_REQUISICOES)
     log(f"  shopping cerrado: {len(eventos)} eventos")
+    return eventos
+
+
+# --------------------------------------------------------------- links avulsos
+# Bilheterias sem listagem publica por cidade (ex.: BaladAPP) nao permitem
+# varredura, mas as paginas individuais de evento sao legiveis. A usuaria
+# registra o link em dados/eventos_avulsos.json e o robo extrai e acompanha.
+
+NOMES_DOMINIO = {
+    "baladapp.com.br": "BaladAPP",
+    "ingresse.com": "Ingresse",
+    "guicheweb.com.br": "Guichê Web",
+    "bilheteriadigital.com": "Bilheteria Digital",
+}
+
+
+def _nome_da_fonte_pela_url(url):
+    m = re.search(r"https?://(?:www\.)?([^/]+)", url)
+    dominio = m.group(1).lower() if m else ""
+    for chave_dom, nome in NOMES_DOMINIO.items():
+        if dominio.endswith(chave_dom):
+            return nome
+    return dominio or "Link avulso"
+
+
+def extrai_avulso(html, url, hoje):
+    """Extrai um evento generico de uma pagina com og:title + datas em pt-BR."""
+    m_t = re.search(r'property="og:title" content="([^"]+)"', html) or re.search(r"<title>(.*?)</title>", html, re.S)
+    titulo = _limpa_texto_html(m_t.group(1)) if m_t else ""
+    titulo = re.sub(r"^\s*BaladAPP\s*\|\s*", "", titulo).strip()
+    sem = re.sub(r"<(style|script)[^>]*>.*?</\1>", " ", html, flags=re.S)
+    corpo = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", sem))
+    # bloco "Data: ..." tem prioridade sobre o resto do texto
+    m_data = re.search(r"Data:\s*(.{5,80}?)(?:Local:|Hor[aá]rio:|$)", corpo)
+    ini, fim = extrai_datas_texto_pt(m_data.group(1) if m_data else corpo[:6000], hoje)
+    m_local = (re.search(r"Local:\s*(.{3,80}?)\s*/\s*[A-Z]{2}\b", corpo)
+               or re.search(r"Local:\s*(.{3,60}?)(?:\s{2,}|\s+(?:Data|Hor[aá]rio|Classifica|Sobre|Ingressos)\b)", corpo))
+    local_txt = m_local.group(1).strip() if m_local else ""
+    # cidade/UF: "... - Goiânia / GO" no local ou no titulo da pagina
+    cidade, uf = "", ""
+    m_cid = re.search(r"([A-Za-zÀ-ú' ]{3,40})\s*/\s*([A-Z]{2})\b", local_txt + " " + corpo[:1200])
+    if m_cid:
+        cidade, uf = m_cid.group(1).strip(" -"), m_cid.group(2)
+    local = local_txt.split(" - ")[0].strip() if local_txt else ""
+    m_img = re.search(r'property="og:image" content="([^"]+)"', html)
+    if not titulo or not ini or not cidade:
+        return None  # sem dados minimos confiaveis, nao entra
+    return {
+        "nome": titulo,
+        "descricao": "",
+        "categorias": classifica(titulo),
+        "dataInicio": ini,
+        "horaInicio": "",
+        "dataFim": fim,
+        "horaFim": "",
+        "local": local,
+        "endereco": "",
+        "bairro": "",
+        "cidade": cidade,
+        "uf": uf,
+        "lat": None, "lon": None,
+        "gratuito": eh_gratuito(titulo, corpo[:4000]),
+        "online": False,
+        "urlIngresso": url,
+        "urlInfo": url,
+        "imagem": (m_img.group(1) if m_img else ""),
+        "fonte": _nome_da_fonte_pela_url(url),
+        "fonteUrl": url,
+        "tipoFonte": "plataforma",
+        "organizador": "",
+    }
+
+
+def coleta_avulsos(baixador=baixa, hoje=None):
+    hoje = hoje or datetime.now(FUSO_BRASILIA).strftime("%Y-%m-%d")
+    arquivo = RAIZ / "dados" / "eventos_avulsos.json"
+    if not arquivo.exists():
+        return []
+    try:
+        urls = json.loads(arquivo.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as erro:
+        log(f"  AVISO eventos_avulsos.json invalido: {erro}")
+        return []
+    eventos = []
+    for item in urls:
+        url = item["url"] if isinstance(item, dict) else item
+        if not url.startswith("https://"):
+            continue
+        try:
+            html = baixador(url)
+        except Exception as erro:
+            log(f"  AVISO link avulso {url[:60]}: {erro}")
+            continue
+        ev = extrai_avulso(html, url, hoje)
+        if ev:
+            eventos.append(ev)
+        else:
+            log(f"  AVISO link avulso sem dados minimos (titulo/data/cidade): {url[:70]}")
+        time.sleep(PAUSA_ENTRE_REQUISICOES)
+    log(f"  links avulsos: {len(eventos)} eventos")
     return eventos
 
 
@@ -751,6 +859,10 @@ def executa(cidades, baixador=baixa, agora=None):
     if monitora_brasilia:
         log("fontes locais de Brasília: Ulysses")
         todos.extend(coleta_ulysses(baixador))
+    # Links de eventos registrados manualmente (dados/eventos_avulsos.json)
+    avulsos = coleta_avulsos(baixador)
+    todos.extend(avulsos)
+    fontes_avulsas = sorted({e["fonte"] for e in avulsos})
     antes = len(todos)
     todos = remove_duplicados(todos)
     duplicados = antes - len(todos)
@@ -773,7 +885,9 @@ def executa(cidades, baixador=baixa, agora=None):
             {"nome": "Shopping Cerrado", "url": "https://shoppingcerrado.com.br/acontece/"},
         ] if monitora_goiania else []) + ([
             {"nome": "Ulysses Centro de Convenções", "url": "https://ulysses.tur.br/agenda/"},
-        ] if monitora_brasilia else []),
+        ] if monitora_brasilia else []) + [
+            {"nome": nome, "url": ""} for nome in fontes_avulsas
+        ],
         "duplicadosRemovidos": duplicados,
         "eventos": todos,
     }
