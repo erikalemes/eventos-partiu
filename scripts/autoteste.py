@@ -153,6 +153,15 @@ verifica("uniao: so outros permanece outros", coletar.uniao_categorias(["outros"
 _t1 = evento_base(categorias=["outros"])
 _t2 = evento_base(categorias=["teatro"], descricao="mais completo")
 verifica("dedup: une categorias das copias", coletar.remove_duplicados([_t1, _t2])[0]["categorias"] == ["teatro"])
+# regressao do Happy Land: uma fonte so com a estreia + outra com o intervalo
+# completo devem fundir mantendo o termino (senao o evento em temporada some)
+_hl1 = evento_base(nome="Happy Land", dataInicio="2099-01-10", dataFim="", horaInicio="", descricao="x", endereco="y")
+_hl2 = evento_base(nome="Happy Land", dataInicio="2099-01-10", dataFim="2099-02-10", fonte="BaladAPP",
+                   fonteUrl="https://baladapp.com.br/e/1", urlInfo="https://baladapp.com.br/e/1", horaInicio="", local="Pecuária")
+_hl = coletar.remove_duplicados([_hl1, _hl2])
+verifica("dedup: funde periodo (mantem dataFim mais distante)", len(_hl) == 1 and _hl[0]["dataFim"] == "2099-02-10")
+verifica("dedup: evento em temporada sobrevive ao filtro de passados",
+         len(coletar.remove_passados_e_distantes(_hl, "2099-01-20")) == 1)
 
 # ------------------------------------------------------------ 7. confiabilidade
 verifica("confianca: completo = plataforma", coletar.confianca_de(evento_base()) == "plataforma")

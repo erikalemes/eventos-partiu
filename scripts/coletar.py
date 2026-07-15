@@ -807,6 +807,16 @@ def remove_duplicados(eventos):
         # Sympla (teatro-espetaculo, em-alta, hoje...); sem unir, a categoria boa
         # se perde quando a copia vencedora veio de uma colecao generica.
         principal["categorias"] = uniao_categorias(principal["categorias"], extra["categorias"])
+        # Une o periodo: uma fonte pode informar so a estreia e outra o intervalo
+        # completo (ex.: Happy Land, Pulsa "03/07" x BaladAPP "03/07 a 02/08").
+        # Sem isso, o evento em temporada era descartado como encerrado.
+        fim_extra = extra["dataFim"] or ""
+        if fim_extra and fim_extra > (principal["dataFim"] or principal["dataInicio"]):
+            principal["dataFim"] = fim_extra
+            principal["horaFim"] = extra["horaFim"] or principal["horaFim"]
+        if extra["dataInicio"] < principal["dataInicio"]:
+            principal["dataInicio"] = extra["dataInicio"]
+            principal["horaInicio"] = extra["horaInicio"] or principal["horaInicio"]
         if extra["fonte"] != principal["fonte"]:
             fontes_extras = principal.setdefault("fontesAdicionais", [])
             if not any(f["url"] == extra["fonteUrl"] for f in fontes_extras):
