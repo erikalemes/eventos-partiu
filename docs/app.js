@@ -14,7 +14,9 @@
   var MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
   // Tipos mostrados ao usuario -> categorias internas dos eventos.
-  // "Cursos e oficinas" fica fora do "Todos": o foco do buscador e lazer.
+  // "Cursos e oficinas" e "Eventos da Sympla" ficam fora do "Todos": o foco do
+  // buscador sao os eventos de lazer das fontes oficiais/locais; a Sympla
+  // (bares, baladas, eventos pequenos) so entra se o usuario marcar.
   var TIPOS_UI = [
     ["todos", "Todos", null],
     ["shows", "Shows e música", ["shows"]],
@@ -28,6 +30,7 @@
     ["danca", "Dança", ["danca"]],
     ["esportes", "Esportes", ["esportes"]],
     ["cursos", "Cursos e oficinas", ["cursos"]],
+    ["sympla", "Eventos da Sympla", null],
     ["outros", "Outros", ["outros", "congressos", "negocios", "tecnologia", "universitarios", "religiosos", "literatura"]]
   ];
   var ROTULO_TIPO = {};
@@ -235,13 +238,17 @@
         if (def && def[2]) def[2].forEach(function (c) { if (categorias.indexOf(c) < 0) categorias.push(c); });
       });
     }
+    var incluiSympla = marcados.indexOf("sympla") >= 0;
     return {
       cidadeSelecionada: estado.cidade,
       intervalo: (ini || fim) ? [ini, fim] : null,
       todos: todos,
       tiposMarcados: todos ? [] : marcados,
       categorias: categorias,
-      incluiCursos: marcados.indexOf("cursos") >= 0
+      incluiCursos: marcados.indexOf("cursos") >= 0,
+      incluiSympla: incluiSympla,
+      // so "Eventos da Sympla" marcado (sem tipos especificos): mostra apenas eles
+      somenteSympla: !todos && incluiSympla && categorias.length === 0
     };
   }
 
@@ -250,6 +257,15 @@
   function eventoNoIntervalo(ev, ini, fim) {
     var evIni = ev.dataInicio, evFim = ev.dataFim || ev.dataInicio;
     return evIni <= fim && evFim >= ini;
+  }
+
+  function ehSomenteSympla(ev) {
+    // Evento que existe APENAS na Sympla. Se ele tambem esta numa fonte
+    // oficial/local (fundido na deduplicacao), continua visivel no "Todos".
+    if (ev.fonte === "Sympla") {
+      return !(ev.fontesAdicionais || []).some(function (f) { return f.nome !== "Sympla"; });
+    }
+    return false;
   }
 
   function filtraEventos(criterios) {
@@ -261,6 +277,9 @@
       if (criterios.intervalo && !eventoNoIntervalo(ev, criterios.intervalo[0], criterios.intervalo[1])) return false;
       var ehCurso = ev.categorias.indexOf("cursos") >= 0;
       if (ehCurso && !criterios.incluiCursos) return false; // cursos so quando pedidos
+      var soSympla = ehSomenteSympla(ev);
+      if (soSympla && !criterios.incluiSympla) return false; // Sympla so quando pedida
+      if (criterios.somenteSympla && !soSympla) return false;
       if (!criterios.todos && criterios.categorias.length &&
         !criterios.categorias.some(function (c) { return ev.categorias.indexOf(c) >= 0; })) return false;
       return true;
@@ -337,7 +356,7 @@
     } else {
       chips.push("A partir de hoje");
     }
-    if (criterios.todos) chips.push("Todos os tipos (sem cursos)");
+    if (criterios.todos) chips.push("Todos os tipos (sem cursos e sem Sympla)");
     else criterios.tiposMarcados.forEach(function (t) { chips.push(ROTULO_TIPO[t] || t); });
     return chips;
   }
