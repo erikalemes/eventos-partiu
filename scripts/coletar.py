@@ -671,6 +671,148 @@ def coleta_cerrado(baixador=baixa, hoje=None):
     return eventos
 
 
+# --------------------------------------------------- Theatro Municipal de SP
+# Fonte oficial. A listagem (Elementor/JetEngine) pareia link do evento com as
+# datas dd/mm/aaaa dentro de cada item de grade; os titulos limpos vem da API
+# REST do WordPress. Ano fora da faixa plausivel e artefato de CSS e cai fora.
+
+THEATRO_SP_LISTA = "https://theatromunicipal.org.br/pt-br/programacao/"
+THEATRO_SP_API = "https://theatromunicipal.org.br/wp-json/wp/v2/eventos?per_page=100&_fields=title,link"
+
+
+def extrai_theatromunicipal(html_lista, json_api, hoje):
+    try:
+        posts = json.loads(json_api)
+        titulos = {p["link"].rstrip("/"): _limpa_texto_html(p["title"]["rendered"]) for p in posts}
+    except (json.JSONDecodeError, KeyError, TypeError):
+        titulos = {}
+    ano_min, ano_max = int(hoje[:4]) - 1, int(hoje[:4]) + 2
+    eventos = []
+    for item in re.split(r"jet-listing-grid__item", html_lista)[1:]:
+        m_link = re.search(r'href="(https://theatromunicipal\.org\.br/eventos/[a-z0-9-]+/)"', item)
+        if not m_link:
+            continue
+        url = m_link.group(1)
+        datas = []
+        for d, mes, ano in re.findall(r"(\d{2})/(\d{2})/(\d{4})", item):
+            if ano_min <= int(ano) <= ano_max and 1 <= int(mes) <= 12 and 1 <= int(d) <= 31:
+                datas.append(f"{ano}-{mes}-{d}")
+        if not datas:
+            continue
+        titulo = titulos.get(url.rstrip("/"), "")
+        if not titulo:
+            # fallback: o titulo e o texto mais longo do cartao antes da primeira
+            # data (os demais nos sao rotulos curtos: "Evento Pago", "Opera"...)
+            nos = [_limpa_texto_html(t) for t in re.findall(r">([^<>]{3,90})<", item)]
+            antes_da_data = []
+            for no in nos:
+                if re.search(r"\d{2}/\d{2}/\d{4}", no):
+                    break
+                antes_da_data.append(no)
+            candidatos = [n for n in antes_da_data if n.lower() not in ("evento pago", "evento gratuito")]
+            titulo = max(candidatos, key=len) if candidatos else ""
+        if not titulo:
+            continue  # sem titulo confiavel, nao chuta
+        texto_item = re.sub(r"<[^>]+>", " ", item)
+        eventos.append({
+            "nome": titulo,
+            "descricao": "",
+            "categorias": uniao_categorias(classifica(titulo), ["teatro"]),
+            "dataInicio": min(datas),
+            "horaInicio": "",
+            "dataFim": max(datas) if max(datas) != min(datas) else "",
+            "horaFim": "",
+            "local": "Theatro Municipal de São Paulo",
+            "endereco": "Praça Ramos de Azevedo, s/n, República",
+            "bairro": "República",
+            "cidade": "São Paulo",
+            "uf": "SP",
+            "lat": None, "lon": None,
+            "gratuito": "evento gratuito" in texto_item.lower(),
+            "online": False,
+            "urlIngresso": url,
+            "urlInfo": url,
+            "imagem": "",
+            "fonte": "Theatro Municipal SP",
+            "fonteUrl": url,
+            "tipoFonte": "oficial",
+            "organizador": "",
+        })
+    # o mesmo evento pode aparecer em mais de uma vitrine da pagina
+    return remove_duplicados(eventos)
+
+
+def coleta_theatromunicipal(baixador=baixa, hoje=None):
+    hoje = hoje or datetime.now(FUSO_BRASILIA).strftime("%Y-%m-%d")
+    try:
+        html_lista = baixador(THEATRO_SP_LISTA)
+        json_api = baixador(THEATRO_SP_API)
+    except Exception as erro:
+        log(f"  AVISO theatro municipal sp: {erro}")
+        return []
+    novos = extrai_theatromunicipal(html_lista, json_api, hoje)
+    log(f"  theatro municipal sp: {len(novos)} eventos")
+    time.sleep(PAUSA_ENTRE_REQUISICOES)
+    return novos
+
+
+# --------------------------------------------------------- Pirenópolis Tur
+# Agenda oficial de turismo de Pirenopolis: cada evento e um link no formato
+# /eventos/AAAA-MM-DD/Titulo+Do+Evento (data e titulo dentro do endereco).
+
+PIRENOPOLIS_TUR_URL = "https://pirenopolis.tur.br/eventos"
+
+
+def extrai_pirenopolistur(html):
+    from urllib.parse import unquote
+    eventos, vistos = [], set()
+    for href in re.findall(r'href="(/eventos/\d{4}-\d{2}-\d{2}/[^"]+)"', html):
+        if href in vistos:
+            continue
+        vistos.add(href)
+        m = re.match(r"/eventos/(\d{4}-\d{2}-\d{2})/(.+)", href)
+        nome = unquote(m.group(2).replace("+", " ")).strip().rstrip(".")
+        if not nome:
+            continue
+        eventos.append({
+            "nome": nome,
+            "descricao": "",
+            "categorias": classifica(nome),
+            "dataInicio": m.group(1),
+            "horaInicio": "",
+            "dataFim": "",
+            "horaFim": "",
+            "local": "",
+            "endereco": "",
+            "bairro": "",
+            "cidade": "Pirenópolis",
+            "uf": "GO",
+            "lat": None, "lon": None,
+            "gratuito": eh_gratuito(nome),
+            "online": False,
+            "urlIngresso": "https://pirenopolis.tur.br" + href,
+            "urlInfo": "https://pirenopolis.tur.br" + href,
+            "imagem": "",
+            "fonte": "Pirenópolis Tur",
+            "fonteUrl": "https://pirenopolis.tur.br" + href,
+            "tipoFonte": "institucional",
+            "organizador": "",
+        })
+    return eventos
+
+
+def coleta_pirenopolistur(baixador=baixa):
+    try:
+        html = baixador(PIRENOPOLIS_TUR_URL)
+    except Exception as erro:
+        log(f"  AVISO pirenopolis tur: {erro}")
+        return []
+    novos = extrai_pirenopolistur(html)
+    log(f"  pirenopolis tur: {len(novos)} eventos")
+    time.sleep(PAUSA_ENTRE_REQUISICOES)
+    return novos
+
+
 # --------------------------------------------------------------- links avulsos
 # Bilheterias sem listagem publica por cidade (ex.: BaladAPP) nao permitem
 # varredura, mas as paginas individuais de evento sao legiveis. A usuaria
@@ -861,6 +1003,8 @@ def executa(cidades, baixador=baixa, agora=None):
     monitora = {normaliza_nome(c["nome"]) for c in cidades}
     monitora_goiania = "goiania" in monitora
     monitora_brasilia = "brasilia" in monitora
+    monitora_sp = "sao paulo" in monitora
+    monitora_piri = "pirenopolis" in monitora
     if monitora_goiania:
         log("fontes locais de Goiânia: Goiânia Pulsa, CCGO, Shopping Cerrado")
         todos.extend(coleta_goianiapulsa(baixador))
@@ -869,6 +1013,12 @@ def executa(cidades, baixador=baixa, agora=None):
     if monitora_brasilia:
         log("fontes locais de Brasília: Ulysses")
         todos.extend(coleta_ulysses(baixador))
+    if monitora_sp:
+        log("fontes locais de São Paulo: Theatro Municipal")
+        todos.extend(coleta_theatromunicipal(baixador))
+    if monitora_piri:
+        log("fontes locais de Pirenópolis: Pirenópolis Tur")
+        todos.extend(coleta_pirenopolistur(baixador))
     # Links de eventos registrados manualmente (dados/eventos_avulsos.json)
     avulsos = coleta_avulsos(baixador)
     todos.extend(avulsos)
@@ -895,7 +1045,11 @@ def executa(cidades, baixador=baixa, agora=None):
             {"nome": "Shopping Cerrado", "url": "https://shoppingcerrado.com.br/acontece/"},
         ] if monitora_goiania else []) + ([
             {"nome": "Ulysses Centro de Convenções", "url": "https://ulysses.tur.br/agenda/"},
-        ] if monitora_brasilia else []) + [
+        ] if monitora_brasilia else []) + ([
+            {"nome": "Theatro Municipal SP", "url": "https://theatromunicipal.org.br/pt-br/programacao/"},
+        ] if monitora_sp else []) + ([
+            {"nome": "Pirenópolis Tur", "url": "https://pirenopolis.tur.br/eventos"},
+        ] if monitora_piri else []) + [
             {"nome": nome, "url": ""} for nome in fontes_avulsas
         ],
         "duplicadosRemovidos": duplicados,

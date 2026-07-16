@@ -91,6 +91,22 @@ norm_uly = [n for n in (coletar.normaliza_ulysses(b) for b in coletar.extrai_uly
 verifica("ulysses: extrai eventos do fixture", len(norm_uly) >= 5, f"so {len(norm_uly)}")
 verifica("ulysses: Brasília, oficial, com hora", all(e["cidade"] == "Brasília" and e["tipoFonte"] == "oficial" and e["horaInicio"] for e in norm_uly))
 
+# ------------------------------ 2c2. Theatro Municipal SP e Pirenópolis Tur
+html_tm = (FIXTURES / "theatromunicipal.html").read_text(encoding="utf-8", errors="ignore")
+api_tm = (FIXTURES / "theatromunicipal_api.json").read_text(encoding="utf-8", errors="ignore")
+norm_tm = coletar.extrai_theatromunicipal(html_tm, api_tm, "2026-07-16")
+verifica("theatro municipal: extrai eventos do fixture", len(norm_tm) >= 5, f"so {len(norm_tm)}")
+verifica("theatro municipal: SP oficial com datas ISO", all(e["cidade"] == "São Paulo" and e["tipoFonte"] == "oficial" and len(e["dataInicio"]) == 10 for e in norm_tm))
+verifica("theatro municipal: acha a opera com intervalo",
+         any("tristao" in coletar.normaliza_nome(e["nome"]) and e["dataFim"] for e in norm_tm))
+verifica("theatro municipal: descarta ano-artefato de CSS", all(e["dataInicio"][:4] in ("2025", "2026", "2027", "2028") for e in norm_tm))
+
+html_pt = (FIXTURES / "pirenopolistur.html").read_text(encoding="utf-8", errors="ignore")
+norm_pt = coletar.extrai_pirenopolistur(html_pt)
+verifica("pirenopolis tur: extrai eventos do fixture", len(norm_pt) >= 5, f"so {len(norm_pt)}")
+verifica("pirenopolis tur: data e nome vindos da URL", all(e["cidade"] == "Pirenópolis" and len(e["dataInicio"]) == 10 and e["nome"] for e in norm_pt))
+verifica("pirenopolis tur: urls https validas", all(e["fonteUrl"].startswith("https://pirenopolis.tur.br/eventos/") for e in norm_pt))
+
 # ------------------------------------ 2d. links avulsos (BaladAPP etc.)
 html_bap = (FIXTURES / "baladapp_happyland.html").read_text(encoding="utf-8", errors="ignore")
 _av = coletar.extrai_avulso(html_bap, "https://baladapp.com.br/pt-BR/eventos/happy-land-2026/8948", "2026-07-15")

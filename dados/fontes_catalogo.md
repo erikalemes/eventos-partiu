@@ -13,11 +13,15 @@ Aparecida e Brasília". Status de implementação após sondagem técnica real d
 | Centro de Convenções Goiânia (ccgo.com.br/eventos) | Goiânia | cartões `grid-entry` (título + data/intervalo + espaço) |
 | Shopping Cerrado (acontece) | Goiânia | listagem + página de cada post (datas por extenso) |
 | Ulysses Centro de Convenções (ulysses.tur.br/agenda) | Brasília | JSON-LD schema.org/Event completo (com hora) |
+| Theatro Municipal SP (theatromunicipal.org.br) | São Paulo | itens de grade da listagem (link + datas) + títulos pela API REST do WordPress |
+| Pirenópolis Tur (pirenopolis.tur.br/eventos) | Pirenópolis | data e título embutidos na URL de cada evento |
 
 ## Sondadas e inviáveis por enquanto (15/07/2026)
 
 | Fonte | Motivo |
 |---|---|
+| SP Cultura / prefeitura de SP (spcultura.prefeitura.sp.gov.br) | servidor não responde (conexão cai antes da resposta); é MapasCulturais com API, revisitar |
+| Sesc SP (sescsp.org.br/programacao) | página montada por JavaScript |
 | BaladAPP (baladapp.com.br) | sem listagem pública por cidade (home em JavaScript, sem sitemap/API); páginas individuais são legíveis, então entra via `dados/eventos_avulsos.json` (link a link) |
 | Boulevard Brasília (acontece) | página montada por JavaScript (Next.js sem dados no HTML) |
 | Teatro SESI (programacao) | conteúdo montado por JavaScript |
