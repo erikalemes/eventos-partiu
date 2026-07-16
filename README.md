@@ -38,7 +38,7 @@ A coleta respeita as fontes: usa só páginas públicas, com pausa entre requisi
 
 ## Cidades monitoradas
 
-Goiânia/GO, Aparecida de Goiânia/GO, Anápolis/GO, Caldas Novas/GO, Pirenópolis/GO, Brasília/DF, Rio de Janeiro/RJ, Belo Horizonte/MG e, em São Paulo, São Paulo, São Sebastião e as cidades do trajeto litoral–capital (Caraguatatuba, Paraibuna, São José dos Campos, Jacareí, Guararema, Arujá, Mogi das Cruzes e Guarulhos).
+Goiânia/GO, Aparecida de Goiânia/GO, Anápolis/GO, Caldas Novas/GO, Pirenópolis/GO, Cidade de Goiás/GO, Brasília/DF, Rio de Janeiro/RJ, Belo Horizonte/MG e, em São Paulo, São Paulo, São Sebastião e as cidades do trajeto litoral–capital (Caraguatatuba, Paraibuna, São José dos Campos, Jacareí, Guararema, Arujá, Mogi das Cruzes e Guarulhos).
 
 **Para adicionar uma cidade:** inclua uma linha em `dados/cidades_monitoradas.json` com o nome, UF, o slug da Sympla (fim da URL de `https://www.sympla.com.br/eventos/<slug>`) e o slug da Eventbrite (fim da URL de `https://www.eventbrite.com.br/d/brazil--<slug>/all-events/`). A próxima coleta já inclui a cidade.
 

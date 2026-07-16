@@ -16,5 +16,6 @@
   {"nome": "Arujá", "uf": "SP", "slugSympla": "aruja-sp", "slugEventbrite": "aruj%C3%A1"},
   {"nome": "Mogi das Cruzes", "uf": "SP", "slugSympla": "mogi-das-cruzes-sp", "slugEventbrite": "mogi-das-cruzes"},
   {"nome": "Guarulhos", "uf": "SP", "slugSympla": "guarulhos-sp", "slugEventbrite": "guarulhos"},
-  {"nome": "Pirenópolis", "uf": "GO", "slugSympla": "pirenopolis-go", "slugEventbrite": "piren%C3%B3polis"}
+  {"nome": "Pirenópolis", "uf": "GO", "slugSympla": "pirenopolis-go", "slugEventbrite": "piren%C3%B3polis"},
+  {"nome": "Goiás", "uf": "GO", "slugSympla": "goias-go", "slugEventbrite": "goi%C3%A1s"}
 ]

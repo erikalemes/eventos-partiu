@@ -20,6 +20,7 @@ Aparecida e Brasília". Status de implementação após sondagem técnica real d
 
 | Fonte | Motivo |
 |---|---|
+| Curta Cidade de Goiás (curtacidadedegoias.com.br/agenda) | agenda desatualizada (últimos arquivos mensais são de 2024), sem eventos correntes estruturados |
 | SP Cultura / prefeitura de SP (spcultura.prefeitura.sp.gov.br) | servidor não responde (conexão cai antes da resposta); é MapasCulturais com API, revisitar |
 | Sesc SP (sescsp.org.br/programacao) | página montada por JavaScript |
 | BaladAPP (baladapp.com.br) | sem listagem pública por cidade (home em JavaScript, sem sitemap/API); páginas individuais são legíveis, então entra via `dados/eventos_avulsos.json` (link a link) |
