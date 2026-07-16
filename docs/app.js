@@ -357,7 +357,34 @@
       painel.hidden = true;
       vazio.hidden = false;
       var cidade = criterios.cidadeSelecionada;
-      var sugestoes = ["Amplie o intervalo de datas.", "Marque “Todos” nos tipos de evento."];
+      var sugestoes = [];
+      // Diz quantos eventos existem escondidos pelas regras de Sympla/cursos,
+      // para o vazio nunca ser mudo (caso tipico: cidade so com fontes de bilheteria).
+      if (!criterios.incluiSympla) {
+        var criteriosComSympla = {};
+        Object.keys(criterios).forEach(function (k) { criteriosComSympla[k] = criterios[k]; });
+        criteriosComSympla.incluiSympla = true;
+        criteriosComSympla.somenteSympla = false;
+        var escondidosSympla = filtraEventos(criteriosComSympla).length;
+        if (escondidosSympla > 0) {
+          sugestoes.push(escondidosSympla === 1
+            ? "Existe 1 evento da Sympla nesses critérios. Marque o tipo “Eventos da Sympla” para vê-lo."
+            : "Existem " + escondidosSympla + " eventos da Sympla nesses critérios. Marque o tipo “Eventos da Sympla” para vê-los.");
+        }
+      }
+      if (!criterios.incluiCursos) {
+        var criteriosComCursos = {};
+        Object.keys(criterios).forEach(function (k) { criteriosComCursos[k] = criterios[k]; });
+        criteriosComCursos.incluiCursos = true;
+        var escondidosCursos = filtraEventos(criteriosComCursos).length;
+        if (escondidosCursos > 0) {
+          sugestoes.push(escondidosCursos === 1
+            ? "Existe 1 curso ou oficina nesses critérios. Marque o tipo “Cursos e oficinas” para vê-lo."
+            : "Existem " + escondidosCursos + " cursos e oficinas nesses critérios. Marque o tipo “Cursos e oficinas” para vê-los.");
+        }
+      }
+      sugestoes.push("Amplie o intervalo de datas.");
+      if (!criterios.todos) sugestoes.push("Marque “Todos” nos tipos de evento.");
       if (cidade && !CIDADES_COM_EVENTOS[chave(cidade.nome) + "|" + cidade.uf]) {
         sugestoes.unshift("A cidade " + cidade.nome + "/" + cidade.uf + " ainda não é monitorada. Cidades com eventos hoje: " + cidadesMonitoradasTexto() + ".");
       }
