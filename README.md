@@ -7,10 +7,10 @@ Site publicado no GitHub Pages e compartilhável por link, funciona em computado
 
 ## O que o app faz
 
-- Busca por **nome da cidade** (com autocomplete de todos os 5.571 municípios do IBGE) ou por **CEP** (convertido em cidade pelo ViaCEP). A busca por raio em km não foi adotada porque as fontes de eventos não fornecem coordenadas confiáveis para todos os eventos; o CEP resolve o mesmo problema de forma mais confiável.
+- Busca por **nome da cidade**, com autocomplete de todos os 5.571 municípios do IBGE.
 - **Busca simples e direta**: data inicial, data final (opcional; só a inicial = um único dia; vazio = tudo a partir de hoje) e tipo de evento, com o botão "Todos" e os tipos individuais.
 - **Foco em lazer e entretenimento** (shows ao vivo, teatro, festas, gastronomia, infantil, atrações): cursos e oficinas só aparecem na lista se o usuário marcar o tipo "Cursos e oficinas". Do mesmo jeito, os eventos que existem **apenas na Sympla** (bares, baladas e eventos menores) ficam atrás do tipo "Eventos da Sympla"; um evento da Sympla que também está numa fonte oficial continua aparecendo no "Todos".
-- **Resultados agrupados por data**, com grupo "Em cartaz" para eventos longos ainda vigentes; ordenação por data, relevância ou gratuitos primeiro.
+- **Resultados agrupados por data**, com grupo "Em cartaz" para eventos longos ainda vigentes; ordenação por data ou gratuitos primeiro.
 - Cada cartão mostra nome, data, hora, local, endereço, bairro, cidade, categorias, selo de gratuidade, **nível de confiabilidade**, botões de **Ingressos/Inscrição** e **Mais informações** (abrem a página original em nova aba) e a **fonte com link**. Nada é inventado: preço não informado pela fonte aparece como "consulte no site oficial".
 - **Gerar PDF**: usa a impressão do navegador com layout próprio; os links continuam clicáveis no PDF salvo.
 - Eventos **encerrados nunca aparecem** (filtro duplo: na coleta e na tela).
@@ -56,7 +56,7 @@ docs/               site publicado (GitHub Pages em main:/docs)
 scripts/
   coletar.py        robô de coleta (Sympla + Eventbrite)
   gerar_cidades.py  atualiza docs/cidades.js pela API do IBGE
-  autoteste.py      30 verificações automáticas (roda no workflow)
+  autoteste.py      verificações automáticas (roda no workflow)
 dados/
   cidades_monitoradas.json   cidades coletadas
 tests/fixtures/     páginas HTML salvas para o autoteste rodar sem internet
@@ -77,7 +77,7 @@ Não há chaves, senhas nem serviços pagos: o projeto usa apenas páginas públ
 
 - Todo texto vindo das fontes é escapado antes de ir para a tela (proteção contra XSS); conteúdo externo é tratado como dado, nunca como comando.
 - Só links `http(s)` absolutos são aceitos nos botões.
-- A consulta do usuário é limitada a 200 caracteres e processada só no navegador; nada é enviado a servidores próprios (a única chamada externa do app é o ViaCEP, para converter CEP em cidade).
+- A consulta do usuário é limitada a 200 caracteres e processada só no navegador; nada é enviado a servidores próprios (o app não faz nenhuma chamada externa).
 - Não há login, conta, rastreamento nem armazenamento além da última cidade (localStorage do próprio navegador).
 
 ## Limitações conhecidas
